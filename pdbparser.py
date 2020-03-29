@@ -71,6 +71,11 @@ def STR(s):
     else:
         return str(s)
 
+def _normalize_path(path):
+    if os.sep=='\\':
+        path = re.sub(r'([\\])\1+', r'\1', path).replace('\\','\\\\')
+    return path
+
 class pdbparser(object):
     """
     Initialize pdbparser instance
@@ -1291,6 +1296,8 @@ class pdbparser(object):
             fd = list(filePath)
         else:
             # try to open file
+            assert isinstance(filePath, basestring). Logger.error('filePath must be None, a list of lines or a string path to a pdb file')
+            filePath = _normalize_path(filePath)
             try:
                 fd = open(filePath, 'r')
             except:
@@ -1381,6 +1388,7 @@ class pdbparser(object):
             # try to open file
             try:
                 if outputPath is not None:
+                    outputPath = _normalize_path(outputPath)
                     fd = open(outputPath, 'w')
                 else:
                     from io import StringIO
