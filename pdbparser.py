@@ -1296,7 +1296,7 @@ class pdbparser(object):
             fd = list(filePath)
         else:
             # try to open file
-            assert isinstance(filePath, basestring). Logger.error('filePath must be None, a list of lines or a string path to a pdb file')
+            assert isinstance(filePath, basestring), Logger.error('filePath must be None, a list of lines or a string path to a pdb file')
             filePath = _normalize_path(filePath)
             try:
                 fd = open(filePath, 'r')
