@@ -743,7 +743,10 @@ class BoundaryConditions(object):
 
         bin = float(bin)
 
-        x,y,z = get_coordinates(self.__pdb.indexes, self.__pdb)
+        coords = get_coordinates(self.__pdb.indexes, self.__pdb)
+        x      = coords[:,0]
+        y      = coords[:,1]
+        z      = coords[:,2]
         self.__calculate_vector__(x, y, z, bin)
         print("\n\n")
         self.__calculate_vector__(y, x, z, bin)
@@ -767,10 +770,10 @@ class BoundaryConditions(object):
 
         # construct histogram
         histHedges = np.arange(0, np.max([maxDim0-minDim0, maxDim1-minDim1]), bin)
-        bins = np.zeros(histHedges.shape)
-        occurrence = np.zeros(histHedges.shape)
+        bins       = np.zeros(len(histHedges))
+        occurrence = np.zeros(len(histHedges))
 
-        print(histHedges)
+        #print(histHedges)
 
         # get grid
         grid = np.mgrid[minDim0:maxDim0:bin, minDim1:maxDim1:bin].reshape((2,-1))
@@ -778,15 +781,15 @@ class BoundaryConditions(object):
         # get direction max distance
         for idx in range(grid.shape[1]):
             dim0Down = np.where( dim0 >= grid[:,idx][0] )[0]
-            dim0Up = np.where( dim0 <= grid[:,idx][0]+bin )[0]
+            dim0Up   = np.where( dim0 <= grid[:,idx][0]+bin )[0]
             dim1Down = np.where( dim1 >= grid[:,idx][1] )[0]
-            dim1Up = np.where( dim1 <= grid[:,idx][1]+bin )[0]
+            dim1Up   = np.where( dim1 <= grid[:,idx][1]+bin )[0]
 
             indexes = list( set(dim0Down) & set(dim0Up) & set(dim1Down) & set(dim1Up) )
-
             coords = direction[indexes]
+
             if len(coords):
-                radius = np.sqrt(np.sum(grid[:,idx]**2))
+                radius  = np.sqrt(np.sum(grid[:,idx]**2))
                 histIdx = int(radius/bin)
                 bins[histIdx] += np.max(coords) - np.min(coords)
                 occurrence[histIdx] += 1

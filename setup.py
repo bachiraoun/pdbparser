@@ -75,10 +75,12 @@ LONG_DESCRIPTION = ["It's a Protein Data Bank (.pdb) files manipulation package 
                     "At any time and stage of data manipulation, a pdb file of all atoms or a subset of atoms can be exported to a pdb file."]
 DESCRIPTION      = [ LONG_DESCRIPTION[0] ]
 
-# get package info
-#PACKAGE_INFO={}
-#execfile(convert_path( os.path.join(PACKAGE_PATH, PACKAGE_NAME,'__pkginfo__.py') ), PACKAGE_INFO)
-from pdbparser import __version__
+## get package info
+PACKAGE_INFO={}
+infoPath = convert_path('__pkginfo__.py')
+with open(infoPath) as fd:
+    exec(fd.read(), PACKAGE_INFO)
+
 
 ##############################################################################################
 ##################################### USEFUL DEFINITIONS #####################################
@@ -191,7 +193,7 @@ for package in list(PACKAGES):
 metadata = dict(name = PACKAGE_NAME,
                 packages=PACKAGES.keys(),
                 package_dir=PACKAGES,
-                version= __version__,
+                version= PACKAGE_INFO['__version__'] ,
                 author="Bachir AOUN",
                 author_email="bachir.aoun@e-aoun.com",
                 description = "\n".join(DESCRIPTION),
