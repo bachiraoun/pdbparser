@@ -180,14 +180,10 @@ def find_data(where=".", exclude=DATA_EXCLUDE, exclude_directories=EXCLUDE_DIREC
 
 
 # get packages
-PACKAGES = get_packages(path=PACKAGE_PATH, exclude=(os.path.join(PACKAGE_NAME,"AMD"),
-                                                    os.path.join(PACKAGE_NAME,"docs")))
-# remove everything that is not pdbparser
-for package in list(PACKAGES):
-    if PACKAGE_NAME not in package:
-        PACKAGES.pop(package)
-#print PACKAGES
-#exit()
+PACKAGES = get_packages(path=PACKAGE_PATH, base='pdbparser',
+                        exclude=(os.path.join(PACKAGE_NAME,"AMD"),
+                                 os.path.join(PACKAGE_NAME,"docs")))
+PACKAGES[PACKAGE_NAME] = '.'
 
 # create meta data
 metadata = dict(name = PACKAGE_NAME,
