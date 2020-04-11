@@ -22,8 +22,8 @@ from pdbparser.Utilities.Database import __atoms_database__, is_element
 
 
 # parsing string to int or float, returns empty string if not possible
-FLOAT = lambda string: float(string) if string.replace('.','',1).replace('-','',1).strip().isdigit() else np.nan
-INT = lambda string: int(float(string)) if string.replace('.','',1).replace('-','',1).strip().isdigit() else -1
+FLOAT = lambda s: float(s)      if s.replace('.','',1).replace('-','',1).strip().isdigit() else np.nan
+INT   = lambda s: int(float(s)) if s.replace('.','',1).replace('-','',1).strip().isdigit() else -1
 
 # compare two lists
 compare_two_lists = lambda x, y: Counter(x) == Counter(y)

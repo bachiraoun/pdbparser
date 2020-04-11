@@ -109,10 +109,10 @@ class pdbparser(object):
         self.read_pdb(filePath)
 
     def _codify__(self, name='pdb', addDependencies=False, splitRecords=10):
-        assert isinstance(splitRecords, int), LOGGER.error("splitRecords must be an integer")
-        assert splitRecords>0, LOGGER.error("splitRecords must be >0")
-        assert isinstance(name, basestring), LOGGER.error("name must be a string")
-        assert re.match('[a-zA-Z_][a-zA-Z0-9_]*$', name) is not None, LOGGER.error("given name '%s' can't be used as a variable name"%name)
+        assert isinstance(splitRecords, int), Logger.error("splitRecords must be an integer")
+        assert splitRecords>0, Logger.error("splitRecords must be >0")
+        assert isinstance(name, basestring), Logger.error("name must be a string")
+        assert re.match('[a-zA-Z_][a-zA-Z0-9_]*$', name) is not None, Logger.error("given name '%s' can't be used as a variable name"%name)
         dependencies  = ['from pdbparser.pdbparser import pdbparser',
                          'from pdbparser.Utilities.BoundaryConditions import InfiniteBoundaries, PeriodicBoundaries']
         code          = ['{name} = pdbparser(filePath = None)'.format(name=name)]
@@ -278,7 +278,7 @@ class pdbparser(object):
         """ alias to boundaryConditions """
         return self._boundaryConditions
 
-    def __read_TVECT__(self, line, model):
+    def __read_TVECT__(self, line, model, index):
         """
         Contains: the translation vector which have infinite covalent connections
         Notes: For structures not comprised of discrete molecules (e.g., infinite
@@ -302,7 +302,7 @@ class pdbparser(object):
         self.tvect = None
         return model
 
-    def __read_ANISOU__(self, line, model):
+    def __read_ANISOU__(self, line, model, index):
         """
         Contains: the anisotropic temperature factors
         Notes:
@@ -347,28 +347,31 @@ class pdbparser(object):
         ATOM    111  N   ASN    14      11.608  39.863 -24.755 1.000 13.68           N
         ANISOU  111  N   ASN    14     2059   1674   1462     27    244    -96       N
         """
-        self.anisou[ len(self.records)-1 ] = { "record_name"        : STR( line[0:6] ).strip() ,\
-                                               "serial_number"      : INT( line[6:11] ) ,\
-                                               "atom_name"          : STR( line[12:16] ).strip() ,\
-                                               "location_indicator" : STR( line[16] ).strip() ,\
-                                               "residue_name"       : STR( line[17:20] ).strip() ,\
-                                               "chain_identifier"   : STR( line[21] ).strip() ,\
-                                               "sequence_number"    : INT( line[22:26] ) ,\
-                                               "code_of_insertion"  : STR( line[26] ).strip() ,\
-                                               "u[1][1]"            : INT( line[28:35] ) ,\
-                                               "u[2][2]"            : INT( line[35:42] ) ,\
-                                               "u[3][3]"            : INT( line[42:49] ) ,\
-                                               "u[1][2]"            : INT( line[49:56] ) ,\
-                                               "u[1][3]"            : INT( line[56:63] ) ,\
-                                               "u[2][3]"            : INT( line[63:70] ) ,\
-                                               "segment_identifier" : STR( line[72:76] ).strip() ,\
-                                               "element_symbol"     : STR( line[76:78] ).strip() ,\
-                                               "charge"             : STR( line[78:80] ).strip() ,\
-                                              }
+        try:
+            self.anisou[ len(self.records)-1 ] = { "record_name"        : STR( line[0:6] ).strip() ,\
+                                                   "serial_number"      : INT( line[6:11] ) ,\
+                                                   "atom_name"          : STR( line[12:16] ).strip() ,\
+                                                   "location_indicator" : STR( line[16] ).strip() ,\
+                                                   "residue_name"       : STR( line[17:20] ).strip() ,\
+                                                   "chain_identifier"   : STR( line[21] ).strip() ,\
+                                                   "sequence_number"    : INT( line[22:26] ) ,\
+                                                   "code_of_insertion"  : STR( line[26] ).strip() ,\
+                                                   "u[1][1]"            : INT( line[28:35] ) ,\
+                                                   "u[2][2]"            : INT( line[35:42] ) ,\
+                                                   "u[3][3]"            : INT( line[42:49] ) ,\
+                                                   "u[1][2]"            : INT( line[49:56] ) ,\
+                                                   "u[1][3]"            : INT( line[56:63] ) ,\
+                                                   "u[2][3]"            : INT( line[63:70] ) ,\
+                                                   "segment_identifier" : STR( line[72:76] ).strip() ,\
+                                                   "element_symbol"     : STR( line[76:78] ).strip() ,\
+                                                   "charge"             : STR( line[78:80] ).strip() ,\
+                                                  }
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for ANISOU '{l}'".format(l=line.replace('\n',''),i=index))
         # return model
         return model
 
-    def __read_SCALEn__(self, line, model):
+    def __read_SCALEn__(self, line, model, index):
         """
         Contains: the transformation from the orthogonal coordinates contained in
         the entry to fractional crystallographic coordinates
@@ -395,16 +398,19 @@ class pdbparser(object):
         SCALE2      0.000000  0.017065  0.000000        0.00000
         SCALE3      0.000000  0.000000  0.016155        0.00000
         """
-        self.scalen.append( { "record_name": STR( line[0:6] ).strip() ,\
-                              "s[n][1]"    : FLOAT( line[10:20] ) ,\
-                              "s[n][2]"    : FLOAT( line[20:30] ) ,\
-                              "s[n][3]"    : FLOAT( line[30:40] ) ,\
-                              "u[n]"       : FLOAT( line[45:55] ) ,\
-                            } )
+        try:
+            self.scalen.append( { "record_name": STR( line[0:6] ).strip() ,\
+                                  "s[n][1]"    : FLOAT( line[10:20] ) ,\
+                                  "s[n][2]"    : FLOAT( line[20:30] ) ,\
+                                  "s[n][3]"    : FLOAT( line[30:40] ) ,\
+                                  "u[n]"       : FLOAT( line[45:55] ) ,\
+                                } )
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for SCALE '{l}'".format(l=line.replace('\n',''),i=index))
         # return model
         return model
 
-    def __read_ORIGXn__(self, line, model):
+    def __read_ORIGXn__(self, line, model, index):
         """
         Contains: the transformation from the orthogonal coordinates contained
         in the database entry to the submitted coordinates
@@ -431,16 +437,19 @@ class pdbparser(object):
         """
         if len(self.origxn) == 3:
             self.origxn = []
-        self.origxn.append( { "record_name": STR( line[0:6] ).strip() ,\
-                              "o[n][1]"    : FLOAT( line[10:20] ) ,\
-                              "o[n][2]"    : FLOAT( line[20:30] ) ,\
-                              "o[n][3]"    : FLOAT( line[30:40] ) ,\
-                              "t[n]"       : FLOAT( line[45:55] ) ,\
-                            } )
+        try:
+            self.origxn.append( { "record_name": STR( line[0:6] ).strip() ,\
+                                  "o[n][1]"    : FLOAT( line[10:20] ) ,\
+                                  "o[n][2]"    : FLOAT( line[20:30] ) ,\
+                                  "o[n][3]"    : FLOAT( line[30:40] ) ,\
+                                  "t[n]"       : FLOAT( line[45:55] ) ,\
+                                } )
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for ORIGX '{l}'".format(l=line.replace('\n',''),i=index))
         # return model
         return model
 
-    def __read_MODEL__(self, line, model):
+    def __read_MODEL__(self, line, model, index):
         """
         Contains: the model serial number when a single coordinate entry contains
         multiple structures
@@ -479,18 +488,21 @@ class pdbparser(object):
         TER     295      GLU    18
         ENDMDL
         """
-        model = { "record_name"         : STR( line[0:6] ).strip()  ,\
-                  "model_serial_number" : INT( line[10:14] ) ,\
-                  "model_start"         : len(self.records) ,\
-                  "model_end"           : None ,\
-                  "termodel"            : None ,\
-                  "endmodel"            : None ,\
-                  "MODEL_NAME"          : self.define_model_name()
-                 }
+        try:
+            model = { "record_name"         : STR( line[0:6] ).strip()  ,\
+                      "model_serial_number" : INT( line[10:14] ) ,\
+                      "model_start"         : len(self.records) ,\
+                      "model_end"           : None ,\
+                      "termodel"            : None ,\
+                      "endmodel"            : None ,\
+                      "MODEL_NAME"          : self.define_model_name()
+                     }
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for MODEL '{l}'".format(l=line.replace('\n',''),i=index))
         # return model
         return model
 
-    def __read_ENDMDL__(self, line, model):
+    def __read_ENDMDL__(self, line, model, index):
         """
         Contains: these records are paired with MODEL records to group individual
         structures found in a coordinate entry
@@ -531,12 +543,15 @@ class pdbparser(object):
         TER   18190      GLU   122
         ENDMDL
         """
-        model["model_end"] = len(self.records)
-        model["endmodel"]   =  STR( line[0:6] ).strip()
+        try:
+            model["model_end"] = len(self.records)
+            model["endmodel"]  =  STR( line[0:6] ).strip()
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for ENDMDL '{l}'".format(l=line.replace('\n',''),i=index))
         self.models[model["model_serial_number"]] = model
         return None
 
-    def __read_CRYST1__(self, line, model):
+    def __read_CRYST1__(self, line, model, index):
         """
         Contains: unit cell parameters, space group, and Z value
         Notes:
@@ -570,20 +585,23 @@ class pdbparser(object):
         1234567890123456789012345678901234567890123456789012345678901234567890
         CRYST1  117.000   15.000   39.000  90.00  90.00  90.00 P 21 21 21    8
         """
-        self.crystallographicStructure = { "record_name": STR( line[0:6] ).strip() ,\
-                                           "a"          : FLOAT( line[6:15] ) ,\
-                                           "b"          : FLOAT( line[15:24] ) ,\
-                                           "c"          : FLOAT( line[24:33] ) ,\
-                                           "alpha"      : FLOAT( line[33:40] ) ,\
-                                           "beta"       : FLOAT( line[40:47] ) ,\
-                                           "gamma"      : FLOAT( line[47:54] ) ,\
-                                           "space_group": STR( line[55:66] ).strip() ,\
-                                           "z_value"    : INT( line[66:70] ) ,\
-                                         }
+        try:
+            self.crystallographicStructure = { "record_name": STR( line[0:6] ).strip() ,\
+                                               "a"          : FLOAT( line[6:15] ) ,\
+                                               "b"          : FLOAT( line[15:24] ) ,\
+                                               "c"          : FLOAT( line[24:33] ) ,\
+                                               "alpha"      : FLOAT( line[33:40] ) ,\
+                                               "beta"       : FLOAT( line[40:47] ) ,\
+                                               "gamma"      : FLOAT( line[47:54] ) ,\
+                                               "space_group": STR( line[55:66] ).strip() ,\
+                                               "z_value"    : INT( line[66:70] ) ,\
+                                             }
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for CRYST '{l}'".format(l=line.replace('\n',''),i=index))
         # return model
         return model
 
-    def  __read_TER__(self, line, model):
+    def  __read_TER__(self, line, model, index):
         """
         Contains: indicates the end of a list of ATOM/HETATM records for a chain
         Notes:
@@ -634,30 +652,34 @@ class pdbparser(object):
         HETATM 1415  O2  BLE P   1      13.775  30.147  14.862  1.09 20.95           O
         TER    1416      BLE P   1
         """
-        ter =  { "record_name"       : STR( line[0:6] ).strip() ,\
-                 "serial_number"     : INT( line[6:11] ) ,\
-                 "residue_name"      : STR( line[17:20] ).strip()  ,\
-                 "chain_identifier"  : STR( line[21] ).strip() ,\
-                 "sequence_number"   : INT( line[22:26] ) ,\
-                 "code_of_insertion" : STR( line[26] ).strip() ,\
-                 "INDEX_IN_RECORDS"  : len(self.records) ,\
-               }
-        if model is not None:
-            if model['termodel'] is not None:
-                self.ter[ copy.deepcopy(model["termodel"]['INDEX_IN_RECORDS']) ] = copy.deepcopy(model["termodel"] )
-            model["termodel"] = ter
+        try:
+            ter =  { "record_name"       : STR( line[0:6] ).strip() ,\
+                     "serial_number"     : INT( line[6:11] ) ,\
+                     "residue_name"      : STR( line[17:20] ).strip()  ,\
+                     "chain_identifier"  : STR( line[21] ).strip() ,\
+                     "sequence_number"   : INT( line[22:26] ) ,\
+                     "code_of_insertion" : STR( line[26] ).strip() ,\
+                     "INDEX_IN_RECORDS"  : len(self.records) ,\
+                   }
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for TER '{l}'".format(l=line.replace('\n',''),i=index))
         else:
-            self.ter[len(self.records)] = ter
+            if model is not None:
+                if model['termodel'] is not None:
+                    self.ter[ copy.deepcopy(model["termodel"]['INDEX_IN_RECORDS']) ] = copy.deepcopy(model["termodel"] )
+                model["termodel"] = ter
+            else:
+                self.ter[len(self.records)] = ter
         # return model
         return model
 
-    def  __read_END__(self, line, model):
+    def  __read_END__(self, line, model, index):
         """
         this indicates the end of the pdb file
         """
         return model
 
-    def __read_HETATM__(self, line, model):
+    def __read_HETATM__(self, line, model, index):
         """
         Contains: the atomic coordinate records for atoms within "non-standard"
         groups. These records are used for water molecules and atoms presented in HET
@@ -700,7 +722,7 @@ class pdbparser(object):
         # return model
         return model
 
-    def __read_ATOM__(self, line, model):
+    def __read_ATOM__(self, line, model, index):
         """
         Contains: the atomic coordinates for standard residues and the occupancy and
         temperature factor for each atom
@@ -754,24 +776,27 @@ class pdbparser(object):
         ATOM    153  CG2AVAL A  25      30.835  18.826  57.661  0.28 13.58      A1   C
         ATOM    154  CG2BVAL A  25      29.909  16.996  55.922  0.72 13.25      A1   C
         """
-        self.records.append( { "record_name"       : STR( line[0:6] ).strip() ,\
-                               "serial_number"     : INT( line[6:11] ) ,\
-                               "atom_name"         : STR( line[12:16] ).strip() ,\
-                               "location_indicator": STR( line[16] ).strip()  ,\
-                               "residue_name"      : STR( line[17:20] ).strip()  ,\
-                               "chain_identifier"  : STR( line[21] ).strip()  ,\
-                               "sequence_number"   : INT( line[22:26] ) ,\
-                               "code_of_insertion" : STR( line[26] ).strip()  ,\
-                               "coordinates_x"     : FLOAT( line[30:38] ) ,\
-                               "coordinates_y"     : FLOAT( line[38:46] ) ,\
-                               "coordinates_z"     : FLOAT( line[46:54] ) ,\
-                               "occupancy"         : FLOAT( line[54:60] ) ,\
-                               "temperature_factor": FLOAT( line[60:66] ) ,\
-                               "segment_identifier": STR( line[72:76] ).strip()  ,\
-                               "element_symbol"    : STR( line[76:78] ).strip()  ,\
-                               "charge"            : STR( line[78:80] ).strip()  ,\
-                              } )
-         # return model
+        try:
+            self.records.append( { "record_name"       : STR( line[0:6] ).strip() ,\
+                                   "serial_number"     : INT( line[6:11] ) ,\
+                                   "atom_name"         : STR( line[12:16] ).strip() ,\
+                                   "location_indicator": STR( line[16] ).strip()  ,\
+                                   "residue_name"      : STR( line[17:20] ).strip()  ,\
+                                   "chain_identifier"  : STR( line[21] ).strip()  ,\
+                                   "sequence_number"   : INT( line[22:26] ) ,\
+                                   "code_of_insertion" : STR( line[26] ).strip()  ,\
+                                   "coordinates_x"     : FLOAT( line[30:38] ) ,\
+                                   "coordinates_y"     : FLOAT( line[38:46] ) ,\
+                                   "coordinates_z"     : FLOAT( line[46:54] ) ,\
+                                   "occupancy"         : FLOAT( line[54:60] ) ,\
+                                   "temperature_factor": FLOAT( line[60:66] ) ,\
+                                   "segment_identifier": STR( line[72:76] ).strip()  ,\
+                                   "element_symbol"    : STR( line[76:78] ).strip()  ,\
+                                   "charge"            : STR( line[78:80] ).strip()  ,\
+                                  } )
+        except Exception as err:
+            Logger.error("Unable to read line number '{i}' for ATOM '{l}'".format(l=line.replace('\n',''),i=index))
+        # return model
         return model
 
     def __write_pdb(self, fd ,\
@@ -1308,9 +1333,10 @@ class pdbparser(object):
                 self.__name = os.path.basename(STR(filePath)).split('.')[0]
         # read lines
         model = None
-        recordNames = list(self.__RECORD_NAMES__.keys())
+        index = -1
         for line in fd:
-            if line[0:6].strip() not in recordNames:
+            index += 1
+            if line[0:6].strip() not in self.__RECORD_NAMES__:
                 # headings
                 if "REMARK    Boundary Conditions: " in line:
                     bcVectors = line.split("REMARK    Boundary Conditions: ")[1].strip().split()
@@ -1331,7 +1357,7 @@ class pdbparser(object):
                     self.headings.append(line)
             else:
                 methodToCall = self.__RECORD_NAMES__[ line[0:6].strip() ]
-                model = getattr(self, methodToCall)(line, model)
+                model = getattr(self, methodToCall)(line=line, model=model, index=index)
         # close file
         if not isinstance(filePath, (list, tuple)):
             fd.close()
