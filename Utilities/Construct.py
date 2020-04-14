@@ -168,19 +168,11 @@ class Construct(object):
                               for idx in range(len(self.pdbs))]
         self.pdbsNumberOfRecordsInsertionDict = dict(zip(range(len(self.pdbs)), totalNumberOfAtoms))
 
-#         print(self.pdbsNumberofAtomsDict)
-#         print(self.pdbsNumberOfInsertionDict)
-#         print(self.pdbsIndexesNumberOfAtomsSorted)
-#         print(self.pdbsNumberOfRecordsInsertionDict)
-#         raise
-
 
     def update_useful_pdbs_variables(self):
         self.initialize_useful_pdbs_variables()
 
-
     def initialize_grid_variables(self, gridUnitSize = None):
-
         # get gridUnitSize
         if gridUnitSize is None:
             self.gridUnitSize = np.array([1.,1.,1.])
@@ -200,28 +192,17 @@ class Construct(object):
 
         # get restricted grid unit value
         self.restrictedUnitValue =  np.iinfo(self.box3DGrid.dtype).max
-
-        self.fetchRestricted = False
-        self.fetchExisting = False
-#         print(self.box3DGrid.shape)
-#         print(self.restrictedUnitValue)
-#         raise
-
+        self.fetchRestricted     = False
+        self.fetchExisting       = False
 
     def initialize_records_variables(self):
         # self.generatedRecords
         numberOfRecords = np.sum(list(self.pdbsNumberOfRecordsInsertionDict.values()))
         self.generatedRecords = np.zeros((numberOfRecords,3))
-
         # self.exisitingPdbsRecords
         self.exisitingPdbsRecords = np.zeros((0,3))
-
         # constructed records pdb data
         self.initialize_records_pdb_data(numberOfRecords)
-
-#         print(self.generatedRecords.shape)
-#         print(self.exisitingPdbsRecords.shape)
-#         raise
 
 
     def initialize_records_pdb_data(self, number):
@@ -537,7 +518,8 @@ class Construct(object):
         thisPDB = pdbparser()
         thisPDB._boundaryConditions = self.constructionBox
 
-        for idx in range(self.recordName.shape[0]):
+        #for idx in range(self.recordName.shape[0]):
+        for idx in range(self.insertionIndex):
             thisPDB.records.append( { "record_name"       : self.recordName[idx] ,\
                                       "serial_number"     : self.serialNumber[idx] ,\
                                       "atom_name"         : self.atomName[idx] ,\
@@ -642,12 +624,10 @@ class Construct(object):
         else:
             self.fetchRestricted = False
 
-
     def get_box3DGrid_slicing(self, posIdx, margin):
         return [ np.array( range(posIdx[0]-margin, posIdx[0]+margin+1) ).reshape(-1,1,1)%self.box3DGrid.shape[0],
                  np.array( range(posIdx[1]-margin, posIdx[1]+margin+1) ).reshape(1,-1,1)%self.box3DGrid.shape[1],
                  np.array( range(posIdx[2]-margin, posIdx[2]+margin+1) ).reshape(1,1,-1)%self.box3DGrid.shape[2] ]
-
 
     def any_restricted(self):
         if not self.fetchRestricted:
@@ -658,10 +638,8 @@ class Construct(object):
         else:
             return False
 
-
     def get_defined_indexes_in_subBox3DGrid(self):
         return np.array(self.subBox3DGrid[np.nonzero( (self.subBox3DGrid >=0) * (self.subBox3DGrid!=self.restrictedUnitValue) )] )
-
 
     def get_exisiting_indexes_in_subBox3DGrid(self):
         if not self.fetchExisting:
@@ -671,12 +649,10 @@ class Construct(object):
         exisitingIndexes *= -1
         return exisitingIndexes
 
-
     def is_molrecords_accepted(self, molRecords, definedIndexes, exisitingIndexes, minimumDistanceSquared):
         # when no surrounding atoms found
         if not len(definedIndexes) and not len(exisitingIndexes):
             return True
-
         # calculate distances between atoms
         continueLoop = True
         for molIdx in range(molRecords.shape[0]):
@@ -688,7 +664,6 @@ class Construct(object):
                 if np.min(distances) < minimumDistanceSquared:
                     continueLoop = False
                     break
-
             # for existing pdbs
             if len(exisitingIndexes):
                 #difference = self.exisitingPdbsRecords[exisitingIndexes] - molRecords[molIdx,:]
@@ -697,7 +672,7 @@ class Construct(object):
                 if np.min(distances) < minimumDistanceSquared:
                     continueLoop = False
                     break
-
+        # return
         return continueLoop
 
 
@@ -710,7 +685,7 @@ class Construct(object):
             pdbs = pdbparser()
             pdbs.records = __WATER__
             pdbs.set_name("water")
-
+        # get coordinates min ad max
         minMax = get_min_max(self.get_pdb().indexes, self.get_pdb())
         boxSize = np.array( [minMax[1]-minMax[0],
                              minMax[3]-minMax[2],
@@ -718,7 +693,7 @@ class Construct(object):
         boxCenter = np.array( [minMax[1]+minMax[0],
                                minMax[3]+minMax[2],
                                minMax[5]+minMax[4]] )/2.
-
+        # build amorphous system and concatenate
         self.get_pdb().concatenate( AmorphousSystem( pdbs = pdbs,
                                                      insertionNumber = insertionNumber,
                                                      exisitingPdbs = self.get_pdb(),
@@ -727,7 +702,7 @@ class Construct(object):
                                                      density = density,
                                                      priorities = priorities,
                                                      restrictions = restrictions).construct().get_pdb() )
-
+        # return
         return self
 
 
@@ -808,7 +783,7 @@ class AmorphousSystem(Construct):
                 Logger.info("a volume of %r is forbidden out of total volume of %r. Density %r has no priority. Final system density is %r"%(self.forbiddenVolume, np.prod(self.boxSize), self.density, self.density*densityRatio))
 
         # start construction
-        Logger.info("Building amorphous system using random insertion with recussivity limit of %s"%self.recursionLimit)
+        Logger.info("Building amorphous system using random insertion with recursion limit of %s"%self.recursionLimit)
         for pdbIndex in list(reversed(self.pdbsIndexesNumberOfAtomsSorted)):
 
             minMax = get_min_max(self.pdbs[pdbIndex].indexes, self.pdbs[pdbIndex])
@@ -818,9 +793,9 @@ class AmorphousSystem(Construct):
             for molNum in range(insertionDict[pdbIndex]):
                 self.status(self.insertionIndex, totalAtomsNumber, len(self.pdbs[pdbIndex]) )
                 # initialize recursion limit
-                recursion_limit = self.recursionLimit
+                recurLim = self.recursionLimit
 
-                while recursion_limit > 0:
+                while recurLim > 0:
                     # get random orientation vector
                     signs = np.sign( np.random.rand(3)-0.5 )
                     rotationVectors = np.random.rand(3) * signs
@@ -831,7 +806,6 @@ class AmorphousSystem(Construct):
 
                     # translate to box_center
                     positionVectors += self.translateToBoxCenterVector
-                    #print(self.translateToBoxCenterVector, self.boxSize, positionVectors)
 
                     # check if position is already occupied
                     if self.box3DGrid[posIdx[0], posIdx[1], posIdx[2]] >= 0:
@@ -850,7 +824,7 @@ class AmorphousSystem(Construct):
 
                     # In case restriction found
                     if self.any_restricted():
-                        recursion_limit -= 1
+                        recurLim -= 1
                         continue
 
                     # Indexes matching with already defined records
@@ -871,12 +845,12 @@ class AmorphousSystem(Construct):
                         self.combine(molRecords, self.pdbsData[pdbIndex])
                         break
                     else:
-                        recursion_limit -= 1
+                        recurLim -= 1
                         continue
 
                 # recursion limit test
-                if recursion_limit == 0:
-                    Logger.warn("Recursivity limit %r reached for inserted %r of pdb number %r" %(self.recursionLimit, molNum, len(self._pdb)) )
+                if recurLim == 0:
+                    Logger.warn("Recursion limit %r reached for inserted %r of pdb number %r" %(self.recursionLimit, molNum, len(self._pdb)) )
                     continue
 
         Logger.info("Amorphous system built successfully")
