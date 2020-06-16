@@ -938,16 +938,17 @@ class Simulation(object):
         fd.close()
 
 
-    def visualize_trajectory(self, path, vmd_alias = None):
+    def visualize_trajectory(self, path, vmdAlias = None):
         """
         """
-        if vmd_alias is None:
-            from pdbparser.pdbparser import  VMD_ALIAS as vmd_alias
+        if vmdAlias is None:
+            from pdbparser.pdbparser import get_vmd_path
+            vmdAlias = get_vmd_path()
 
         try:
-            os.system( "%s %s" %(vmd_alias, path) )
+            os.system( "%s %s" %(vmdAlias, path) )
         except:
-            Logger.warn('vmd alias %r defined is not correct' %vmd_alias)
+            Logger.warn('vmd alias %r defined is not correct' %vmdAlias)
             raise
 
 

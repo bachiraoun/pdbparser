@@ -53,12 +53,24 @@ else:
     maxint     = sys.maxint
 
 ## get vmd path
-VMD_ALIAS = PREFERENCES['VMD_PATH']
-if VMD_ALIAS is not None:
-    if sys.platform == "win32":
-        VMD_ALIAS = r'"%s"'%VMD_ALIAS
-    else:
-        VMD_ALIAS = '%r'%VMD_ALIAS
+def get_vmd_path():
+    p = PREFERENCES.get('VMD_PATH', None)
+    if p is not None:
+        if sys.platform == "win32":
+            p = r'"%s"'%p
+        else:
+            p = '%r'%p
+    return p
+
+
+def get_pymol_path():
+    p = PREFERENCES.get('PYMOL_PATH', None)
+    if p is not None:
+        if sys.platform == "win32":
+            p = r'"%s"'%p
+        else:
+            p = '%r'%p
+    return p
 
 
 def STR(s):
@@ -1546,9 +1558,9 @@ class pdbparser(object):
                                   coordinates=coordinates)
         # visualize
         if vmdAlias is None:
-            vmdAlias = VMD_ALIAS
-        if VMD_ALIAS is None:
-            Logger.warn("Must set vmd alias using pdbparser 'get_global_parameter' method.")
+            vmdAlias = get_vmd_path()
+        if vmdAlias is None:
+            Logger.warn("vmd software path is not found. pdbparser.Globals.PREFERENCES.update_preferences({'VMD_PATH':'path to vmd executable'}) ")
             return
         if commands is None:
             commands = ""
@@ -1570,7 +1582,17 @@ class pdbparser(object):
             os.remove(filename)
 
 
-    def visualize_pymol(self, indexes=None, coordinates=None, pymolAlias="/Applications/PyMOL.app/Contents/bin/pymol"):
+    def visualize_pymol(self, indexes=None, coordinates=None, pymolAlias=None):
+        """
+        Visualize current pdb using pymol software.\n
+
+        :Parameters:
+            #. indexes (None, list, tuple): The atoms indexes to visualize. if None, all atoms are visualized.
+            #. coordinates (None, np.ndarray): Change atoms coordinates for visualization purposes. If None records coordinates will be used.
+            #. pymolAlias (string): pymol executable path. If None is given, pymol alias of pdbparser parameter file is used.
+            #. startupScript (string): The startup file path. Launch vmd and pass .tcl script.
+        """
+
         # create tempfile
         (fd, filename) = tempfile.mkstemp(suffix='.pdb')
         # export temporary file
@@ -1583,6 +1605,11 @@ class pdbparser(object):
                                   scalen = True ,\
                                   anisou = False,
                                   coordinates=coordinates)
+        if pymolAlias is None:
+            pymolAlias = get_pymol_path()
+        if pymolAlias is None:
+            Logger.warn("pymol software path is not found. pdbparser.Globals.PREFERENCES.update_preferences({'PYMOL_PATH':'path to pymol executable'}) ")
+            return
         try:
             os.system("%s %s" %(pymolAlias, filename) )
         except:
@@ -1858,9 +1885,9 @@ class pdbTrajectory(object):
         self.export_xyz_trajectory(outputPath=filename, indexes=indexes, atomsIndexes=atomsIndexes)
         # visualize
         if vmdAlias is None:
-            vmdAlias = VMD_ALIAS
-        if VMD_ALIAS is None:
-            Logger.warn("Must set vmd alias using pdbparser 'get_global_parameter' method.")
+            vmdAlias = get_vmd_path()
+        if vmdAlias is None:
+            Logger.warn("vmd software path is not found. pdbparser.Globals.PREFERENCES.update_preferences({'VMD_PATH':'path to vmd executable'}) ")
             return
         try:
             os.system( "%s %s" %(vmdAlias, filename) )
@@ -1958,9 +1985,9 @@ class pdbTrajectory(object):
 
         # export trajectory files
         if vmdAlias is None:
-            vmdAlias = VMD_ALIAS
-        if VMD_ALIAS is None:
-            Logger.warn("Must set vmd alias using pdbparser 'get_global_parameter' method.")
+            vmdAlias = get_vmd_path()
+        if vmdAlias is None:
+            Logger.warn("vmd software path is not found. pdbparser.Globals.PREFERENCES.update_preferences({'VMD_PATH':'path to vmd executable'}) ")
             return
         try:
             Logger.info("exporting trajectory files")
