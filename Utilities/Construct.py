@@ -21,7 +21,7 @@ from .Geometry import *
 from .Information import *
 from .Modify import *
 from .BoundaryConditions import InfiniteBoundaries, PeriodicBoundaries
-from .Collection import generate_sphere_points, generate_asymmetric_sphere_points, generate_crystal_matrix, get_crystal_points
+from .Collection import generate_sphere_points, generate_asymmetric_sphere_points
 from .Database import __avogadroNumber__, __interMolecularMinimumDistance__, __ATOM__, __WATER__
 
 

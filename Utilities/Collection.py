@@ -7,7 +7,7 @@ This module contains a collection of methods used throughout the package.
 # standard libraries imports
 from __future__ import print_function
 from collections import Counter
-import os,sys
+import os,sys,numbers
 if sys.version_info[0] >= 3:
     basestring = str
 
@@ -458,10 +458,10 @@ Collections of special objects
 """
 # Priority dictionary using binary heaps
 # David Eppstein, UC Irvine, 8 Mar 2002
-class priorityDictionary(dict):
+class PriorityDictionary(dict):
     def __init__(self):
         '''
-        Initialize priorityDictionary by creating binary heap
+        Initialize PriorityDictionary by creating binary heap
         of pairs (value,key).  Note that changing or removing a dict entry will
         not remove the old pair from the heap until it is found by smallest() or
         until the heap is rebuilt.
@@ -475,7 +475,7 @@ class priorityDictionary(dict):
         '''
 
         if len(self) == 0:
-            # smallest of empty priorityDictionary
+            # smallest of empty PriorityDictionary
             raise IndexError
 
         heap = self.__heap
@@ -496,7 +496,7 @@ class priorityDictionary(dict):
 
     def __iter__(self):
         '''
-        Create destructive sorted iterator of priorityDictionary.
+        Create destructive sorted iterator of PriorityDictionary.
         '''
         def iterfn():
             while len(self) > 0:
@@ -584,7 +584,7 @@ def Dijkstra(G,start,end=None):
 
     D = {}	# dictionary of final distances
     P = {}	# dictionary of predecessors
-    Q = priorityDictionary()   # est.dist. of non-final vert.
+    Q = PriorityDictionary()   # est.dist. of non-final vert.
     Q[start] = 0
 
     for v in Q:
@@ -604,7 +604,7 @@ def Dijkstra(G,start,end=None):
 
     return (D,P)
 
-def shortestPath(G,start,end):
+def shortest_path(G,start,end):
     """
     Find a single shortest path from the given start vertex
     to the given end vertex.
@@ -624,16 +624,22 @@ def shortestPath(G,start,end):
     return Path
 
 
-def generate_crystal_matrix(a, b, c, alpha, beta, gamma):
+
+def get_lattice_vectors(a, b, c, alpha, beta, gamma):
     """
-    Calculation of reciprocal lattice parameters and
-    orthogonal matrix of crystal orientation
-    Am(3,3) -  3*3 - matrics
+    compute lattice basis vectors (boundary conditions vectors)
+    given crystallographic lattice parameters. Convention is c along z axis
+
+    [latice reciprocal matrix] -  3*3 - matrix
     ::
 
         a*  b*cos(gama*)  c*cos(beta*)
         0   b*sin(gama*) -c*sin(beta*)cosAlpha
         0       0         1/c
+
+    latice matrix vectors -  3*3 - matrix
+    ::
+        inv( [latice reciprocal matrix] )
 
 
     :Parameters:
@@ -641,22 +647,51 @@ def generate_crystal_matrix(a, b, c, alpha, beta, gamma):
         #. b (Number): Length of b vector.
         #. c (Number): Length of c vector.
         #. alpha (Number): Angle between b and c in degrees.
-        #. beta (Number): Angle between c and a in degrees.
+        #. beta (Number):  Angle between a and c in degrees.
         #. gamma (Number): Angle between a and b in degrees.
 
     :Returns:
         #. basis (numpy.ndarray): (3X3) numpy array basis.
         #. rbasis (numpy.ndarray): (3X3) numpy array normalized by volume reciprocal basis.
     """
+    assert is_number(a), "a must be a number"
+    assert is_number(b), "b must be a number"
+    assert is_number(c), "c must be a number"
+    assert is_number(alpha), "alpha must be a number"
+    assert is_number(beta), "beta must be a number"
+    assert is_number(gamma), "gamma must be a number"
+    a     = float(a)
+    b     = float(b)
+    c     = float(c)
+    alpha = float(alpha)
+    beta  = float(beta)
+    gamma = float(gamma)
+    assert a>0, "a must be >0"
+    assert b>0, "b must be >0"
+    assert c>0, "c must be >0"
+    assert 0<alpha<180, "alpha must be >0 and < 180"
+    assert 0<beta<180, "beta must be >0 and < 180"
+    assert 0<gamma<180, "gamma must be >0 and < 180"
+    ### alternative implementation might be as the following
+    ### anglesRad = np.radians([alpha, beta, gamma])
+    ### cosAlpha, cosBeta, cosGamma = np.cos(anglesRad)
+    ### sinAlpha, sinBeta, sinGamma = np.sin(anglesRad)
+    ### val = (cosAlpha * cosBeta - cosGamma) / (sinAlpha * sinBeta)
+    ### gammaStar = np.arccos(val)
+    ### x = [a * sinBeta, 0.0, a * cosBeta]
+    ### y = [-b * sinAlpha * np.cos(gammaStar),b * sinAlpha * np.sin(gammaStar),b * cosAlpha,]
+    ### z = [0.0, 0.0, float(c)]
+    ### # return
+    ### return np.array(x), np.array(y), np.array(z)
     # transform to rad
     alpha = alpha * np.pi/180
-    beta = beta * np.pi/180
+    beta  = beta  * np.pi/180
     gamma = gamma * np.pi/180
     # compute trigonometry
     cosAlpha = np.cos(alpha)
     sinAlpha = np.sin(alpha)
-    cosBeta = np.cos(beta)
-    sinBeta = np.sin(beta)
+    cosBeta  = np.cos(beta)
+    sinBeta  = np.sin(beta)
     cosGamma = np.cos(gamma)
     sinGamma = np.sin(gamma)
     # compute volume
@@ -678,18 +713,5 @@ def generate_crystal_matrix(a, b, c, alpha, beta, gamma):
                        [ 0.0, 0.0, 1.0/c] ], dtype = float)
     # compute normal basis
     basis = np.linalg.inv(rbasis)
+    # return
     return basis, rbasis
-
-
-def get_crystal_points(crystalMatrix, xPoints , yPoints, zPoints):
-    """
-    generates crystal point from a crystalMatrix
-    """
-    latticePoint = []
-    for i in range(xPoints):
-        for j in range(yPoints):
-            for k in range(zPoints):
-                point = [i,j,k]
-                latticePoint.append( point*crystalMatrix )
-
-    return latticePoint

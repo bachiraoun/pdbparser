@@ -14,7 +14,7 @@ import numpy as np
 # pdbparser library imports
 import pdbparser
 from pdbparser.log import Logger
-from pdbparser.Utilities.Collection import generate_crystal_matrix
+from pdbparser.Utilities.Collection import get_lattice_vectors
 from pdbparser.Utilities.Information import get_coordinates
 from pdbparser.Utilities.Geometry import get_min_max
 
@@ -251,6 +251,7 @@ class PeriodicBoundaries(InfiniteBoundaries):
         if vectorsArray is not None:
             self.set_vectors(vectorsArray)
 
+
     def set_vectors(self, vectorsArray, index = None):
         """
         Create a new set of box vectors.\n
@@ -305,7 +306,7 @@ class PeriodicBoundaries(InfiniteBoundaries):
         # calculate reciprocalVolume
         self._reciprocalVolume.insert(index, np.dot( reciprocalBasisVectors[0,:], np.cross(reciprocalBasisVectors[1,:],reciprocalBasisVectors[2,:]) ))
 
-    def set_vectors_using_abc_alpha_beta_gamma(self, a=None, b=None, c=None, alpha=None, beta=None, gamma=None, index = None):
+    def set_vectors_using_abc_alpha_beta_gamma(self,a,b,c,alpha,beta,gamma, index=None):
         """
         Creates new box parameters at time index using a, b, c, alpha, beta, gamma values
         instead of vectors. Convention is c along z axis
@@ -319,8 +320,13 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. gamma (Number): Angle between a and b in degrees.
             #. index (integer, None): the index of the vectors.
         """
-        basis, rbasis = generate_crystal_matrix(a, b, c, alpha, beta, gamma)
+        basis, rbasis = get_lattice_vectors(a, b, c, alpha, beta, gamma)
         self.set_vectors(basis, index=index)
+
+    def set_vectors_using_lattice_parameters(self, *args, **kwargs):
+        """alias to set_vectors_using_abc_alpha_beta_gamma
+        """
+        return self.set_vectors_using_abc_alpha_beta_gamma(*args, **kwargs)
 
     def get_box_real_center(self, index = -1):
         """
@@ -418,41 +424,53 @@ class PeriodicBoundaries(InfiniteBoundaries):
         """
         return self._angles[index]
 
-    def get_alpha(self, index = -1):
+    def get_alpha(self, index = -1, degrees=False):
         """
         Get alpha angle in rad at time index between box vectors (b,c).
 
         :Parameters:
             #. index (integer): the index of the vectors.
+            #. degrees (boolean): whether to convert to degrees
 
         :Returns:
             #. alpha (float): the angle in rad
         """
-        return self._angles[index] [0]
+        ang = self._angles[index][0]
+        if degrees:
+            ang *= 180./np.pi
+        return ang
 
-    def get_beta(self, index = -1):
+    def get_beta(self, index = -1, degrees=False):
         """
         Get beta angle in rad at time index between box vectors (c,a).
 
         :Parameters:
             #. index (integer): the index of the vectors.
+            #. degrees (boolean): whether to convert to degrees
 
         :Returns:
             #. beta (float): the angle in rad
         """
-        return self._angles[index] [1]
+        ang = self._angles[index][1]
+        if degrees:
+            ang *= 180./np.pi
+        return ang
 
-    def get_gamma(self, index = -1):
+    def get_gamma(self, index = -1, degrees=False):
         """
         Get gamma angle in rad at time index between box vectors (a,b).
 
         :Parameters:
             #. index (integer): the index of the vectors.
+            #. degrees (boolean): whether to convert to degrees
 
         :Returns:
             #. gamma (float): the angle in rad
         """
-        return self._angles[index] [2]
+        ang = self._angles[index][2]
+        if degrees:
+            ang *= 180./np.pi
+        return ang
 
     def get_box_volume(self, index = -1):
         """
