@@ -58,6 +58,12 @@ class CrystalMaker(object):
         self.__build_unit_cell()
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
 
+    def __len__(self):
+        if self.__supercellElements is None:
+            return 0
+        else:
+            return len(self.__supercellElements)
+            
     @classmethod
     def from_cif(cls, path):
         """Read cif file and isntanciate a CrystalMaker instance
@@ -145,17 +151,17 @@ class CrystalMaker(object):
         lines = []
         for l in attributes:
             if l.startswith('_cell_length_a'):
-                A = float(l.strip('_cell_length_a'))
+                A = float(l.strip('_cell_length_a').split('(')[0])
             elif l.startswith('_cell_length_b'):
-                B = float(l.strip('_cell_length_b'))
+                B = float(l.strip('_cell_length_b').split('(')[0])
             elif l.startswith('_cell_length_c'):
-                C = float(l.strip('_cell_length_c'))
+                C = float(l.strip('_cell_length_c').split('(')[0])
             elif l.startswith('_cell_angle_alpha'):
-                ALPHA = float(l.strip('_cell_angle_alpha'))
+                ALPHA = float(l.strip('_cell_angle_alpha').split('(')[0])
             elif l.startswith('_cell_angle_beta'):
-                BETA = float(l.strip('_cell_angle_beta'))
+                BETA = float(l.strip('_cell_angle_beta').split('(')[0])
             elif l.startswith('_cell_angle_gamma'):
-                GAMMA = float(l.strip('_cell_angle_gamma'))
+                GAMMA = float(l.strip('_cell_angle_gamma').split('(')[0])
         assert A is not None, "'_cell_length_a' not found in cif file"
         assert B is not None, "'_cell_length_b' not found in cif file"
         assert C is not None, "'_cell_length_c' not found in cif file"
@@ -165,25 +171,37 @@ class CrystalMaker(object):
         # get atoms
         atoms = []
         for block in loops:
-            if '_atom_site_type_symbol' in block and \
-                '_atom_site_fract_x' in block and \
-                '_atom_site_fract_y' in block and \
-                '_atom_site_fract_z' in block:
-                s  = block['_atom_site_type_symbol']
-                x  = block['_atom_site_fract_x']
-                y  = block['_atom_site_fract_y']
-                z  = block['_atom_site_fract_z']
-                o = block.get('_atom_site_occupancy', [1]*len(block['_atom_site_type_symbol']))
-                for i,e in enumerate(s):
-                    e = ''.join([i for i in e if i.isalpha() or i==' '])
-                    atoms.append((e,float(x[i]),float(y[i]),float(z[i]),float(o[i])))
-                break
+            if '_atom_site_fract_x' in block and \
+               '_atom_site_fract_y' in block and \
+               '_atom_site_fract_z' in block:
+               if '_atom_site_type_symbol' in block:
+                   s  = block['_atom_site_type_symbol']
+               else:
+                   assert '_atom_site_label' in block, "neither '_atom_site_label' nor '_atom_site_type_symbol' are found in _atom_site loop"
+                   s  = block['_atom_site_label']
+               x  = block['_atom_site_fract_x']
+               y  = block['_atom_site_fract_y']
+               z  = block['_atom_site_fract_z']
+               o = block.get('_atom_site_occupancy', ['1']*len(s))
+               for i,e in enumerate(s):
+                   e = ''.join([i for i in e if i.isalpha() or i==' '])
+                   atoms.append((e,float(x[i].split('(')[0]),
+                                   float(y[i].split('(')[0]),
+                                   float(z[i].split('(')[0]),
+                                   float(o[i].split('(')[0])))
+               break
+        assert len(atoms), "atom_site loop not found"
         # get symmetry operations
         symOps = None
         for block in loops:
             if '_space_group_symop_operation_xyz' in block:
                 symOps  = block['_space_group_symop_operation_xyz']
                 break
+        if symOps is None:
+            for block in loops:
+                if '_symmetry_equiv_pos_as_xyz' in block:
+                    symOps  = block['_symmetry_equiv_pos_as_xyz']
+                    break
         if symOps is None:
             for a in attributes:
                 if '_space_group_name_H-M_alt' in a:
@@ -192,6 +210,7 @@ class CrystalMaker(object):
                     assert symOps in HM_TO_HALL, "Unable to map Hermann-Mauguin symbol to Hall symbol"
                     symOps = HM_TO_HALL[symOps]
                     symOps = HALL_TO_SYM_OPS[symOps]
+        assert symOps is not None, "space group symmetry not found"
         # instanciate builder
         builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA])
         # return
