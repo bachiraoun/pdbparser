@@ -17,6 +17,8 @@ from .BoundaryConditions import PeriodicBoundaries
 
 class CrystalMaker(object):
     """ Crystal making implementation from basic unit cell and symmetry imputs.
+    This implementation can be used to generate atomic system using symmetry
+    operations or by reading cif files
 
     :Parameters:
         #. symOps (list): list of symmetry operations
@@ -36,6 +38,7 @@ class CrystalMaker(object):
         # import Crystallography
         from pdbparser.Utilities import Crystallography as CR
 
+        ## create atomic system using symmetry operations
         ops = ['X,Y,Z', '-X,Y,-Z', '-X,-Y,-Z', 'X,-Y,Z',
                '1/2+X,1/2+Y,Z', '1/2-X,1/2+Y,-Z', '1/2-X,1/2-Y,-Z',
                '1/2+X,1/2-Y,Z']
@@ -46,8 +49,12 @@ class CrystalMaker(object):
         alpha     = 90.    # (alpha, the angle between b and c)
         beta      = 125.55 # (beta,  the angle between a and c)
         gamma     = 90.    # (gamma, the angle between a and b)
-
         maker = CR.CrystalMaker(symOps=ops, atoms=atoms, unitcellBC=[a,b,c,alpha,beta,gamma])
+        maker.create_supercell((10,10,10))
+        pdb = maker.get_pdb()
+
+        ## create atomic system using .cif file
+        maker = CR.CrystalMaker.from_cif('path.cif')
         maker.create_supercell((10,10,10))
         pdb = maker.get_pdb()
 
@@ -63,7 +70,7 @@ class CrystalMaker(object):
             return 0
         else:
             return len(self.__supercellElements)
-            
+
     @classmethod
     def from_cif(cls, path):
         """Read cif file and isntanciate a CrystalMaker instance
@@ -112,29 +119,47 @@ class CrystalMaker(object):
             assert os.path.isfile(path), "Given cif file path '%s' is not found"%path
             with open(path, 'r') as fd:
                 cifLines = [l.strip() for l in fd.readlines()]
-                cifLines = [l for l in cifLines if not l.startswith('#') and len(l)]
+                #cifLines = [l for l in cifLines if not l.startswith('#') and len(l)]
             attributes = []
             loopBlocks = []
             loopData   = []
             loopHeader = []
-            loopBuild  = False
-            for l in cifLines:
+            loopBuild  = -1
+            for lidx, l in enumerate(cifLines):
+                if not len(l):
+                    loopBuild = -1
+                    attributes.append(l)
+                    if len(loopData):
+                        loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
+                        loopHeader = []; loopData = []
+                    continue
+                if l.startswith('#'):
+                    continue
                 if l == 'loop_':
                     if len(loopData):
                         loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
                     loopHeader = []; loopData = []
-                    loopBuild = True
-                elif loopBuild and l[0] == '_':
-                    assert l not in loopHeader, "loop header '%s' is defined twice"%l
+                    loopBuild = lidx
+                elif loopBuild>0 and l[0] == '_':
+                    assert l not in loopHeader, "@ line '%i' loop header '%s' is defined twice"%(lidx,l)
                     loopData.append([])
                     loopHeader.append(l)
                 elif l[0] != '_' and len(loopHeader):
-                    loopBuild = False
-                    splitted  = split_loop_line(line=l, n=len(loopHeader))
-                    for i,s in enumerate(splitted):
-                        loopData[i].append(s)
+                    loopBuild = -1
+                    try:
+                        splitted  = split_loop_line(line=l, n=len(loopHeader))
+                    except Exception as err:
+                        print("@ line '%i' (%s) loop unexpectedly broken. Unable to split loop line (%s) "%(lidx, l, err))
+                        loopBuild = -1
+                        attributes.append(l)
+                        if len(loopData):
+                            loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
+                            loopHeader = []; loopData = []
+                    else:
+                        for i,s in enumerate(splitted):
+                            loopData[i].append(s)
                 else:
-                    loopBuild = False
+                    loopBuild = -1
                     attributes.append(l)
                     if len(loopData):
                         loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
