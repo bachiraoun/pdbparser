@@ -242,15 +242,33 @@ class InfiniteBoundaries(object):
 
 class PeriodicBoundaries(InfiniteBoundaries):
     """
-    stores box dimension at different time indexes.
+    stores box boundary conditions at different time indexes.
+
+    :Parameters:
+        #. params (None, PeriodicBoundaries, list, numpy.ndarray): Box boundary
+           boundary conditions instance or parameters defining the box
+           size and shape. When a list of parameters is given, it can
+           be a list of the 6 crystallographic lattice parameters
+           (a,b,c,alpha,beta,gamma) or a list of the three boundary condition
+           vectors for (X,Y,Z). If numpy.ndarray is given, it must be an array
+           matrix of shape (3,3) defining the three boundary condition
+           vectors (X,Y,Z) of the boundary conditions.
     """
-    def __init__(self, vectorsArray=None, *args, **kwargs):
+    def __init__(self, params=None, *args, **kwargs):
          # The base class constructor.
         super(PeriodicBoundaries,self).__init__(*args, **kwargs)
         # set vectors
-        if vectorsArray is not None:
-            self.set_vectors(vectorsArray)
-
+        if params is not None:
+            if isinstance(params, PeriodicBoundaries):
+                assert len(params)>0, "params given as PeriodicBoundaries must not be empty"
+                params = params.get_vectors()
+            if isinstance(params, (np.ndarray,list,tuple)):
+                if len(params) == 6:
+                    self.set_vectors_using_abc_alpha_beta_gamma(*params)
+                else:
+                    self.set_vectors(vectorsArray=params)
+            else:
+                self.set_vectors(vectorsArray=params)
 
     def set_vectors(self, vectorsArray, index = None):
         """

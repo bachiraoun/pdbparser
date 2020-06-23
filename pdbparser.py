@@ -1531,7 +1531,7 @@ class pdbparser(object):
     def visualize(self, *args, **kwargs):
         """alias method. by default this alias points to visualize_vmd"""
         self.visualize_vmd(*args, **kwargs)
-        
+
     def visualize_vmd(self, commands=None, indexes = None, coordinates = None, vmdAlias = None, startupScript=None):
         """
         Visualize current pdb using VMD software.\n
