@@ -638,11 +638,27 @@ class PeriodicBoundaries(InfiniteBoundaries):
         :Returns:
             #. difference (numpy.ndarray): the box space difference vectors array.
         """
-        difference = self.fold_box_array(boxArray) - self.fold_box_array(boxVector)
-        s = np.sign(difference)
-        a = np.abs(difference)
-        d = np.where(a < 0.5, a, 1-a)
-        return s*d
+        # no need to fold into box
+        difference  = boxArray-boxVector
+        rounded = np.where(difference<0, np.ceil(difference-0.5), np.floor(difference+0.5))
+        ## THE ABOVE IS VALID AS LONG AS  np.floor(0.5) = 0
+        #rounded     = np.zeros(difference.shape)
+        #i           = difference>0
+        #rounded[i]  = np.floor(difference[i]+0.5)
+        #i           = difference<0
+        #rounded[i]  = np.ceil(difference[i]-0.5)
+        difference -= rounded
+        return difference
+        #### THIS OLD IMPLEMNETATION IS WRONG. TEST THE FOLLOWING FOR BOTH
+        #### The problem is the output sign along x,y and z
+        #### boxArray = np.array([[0.        , 0.85      , 0.95000005],
+        ####                      [0.95      , 0.95      , 0.8999999 ]])
+        #### boxVector = np.array([0.        , 0.85      , 0.95000005])
+        #difference = self.fold_box_array(boxArray) - self.fold_box_array(boxVector)
+        #s = np.sign(difference)
+        #a = np.abs(difference)
+        #d = np.where(a < 0.5, a, 1-a)
+        #return s*d
 
     def real_difference(self, realVector, realArray, index = -1):
         """
