@@ -202,6 +202,7 @@ metadata = dict(name = PACKAGE_NAME,
                 # Dependent packages (distributions)
                 install_requires=['pysimplelog','pypref'], # it also needs numpy, but this is left for the user to install.
                 setup_requires=[''],
+                zip_safe=False,
                 )
 
 # setup

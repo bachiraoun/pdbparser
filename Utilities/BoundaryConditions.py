@@ -194,9 +194,24 @@ class InfiniteBoundaries(object):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'fold' definition is ambiguous")
+        raise Logger.error("Infinite universe 'box array' definition is ambiguous")
 
     def fold_real_array(self, realArray, index = -1):
+        """
+        For InfiniteBoundaries calling this method will return the same realArray.
+
+        :parameter:
+            #. realArray (numpy.ndarray): The coordinates array.
+        """
+        return realArray
+
+    def get_contiguous_box_array(self, boxArray):
+        """
+        For InfiniteBoundaries calling this method will raise an error.
+        """
+        raise Logger.error("Infinite universe 'box array' definition is ambiguous")
+
+    def get_contiguous_real_array(self, realArray, index = -1):
         """
         For InfiniteBoundaries calling this method will return the same realArray.
 
@@ -504,14 +519,14 @@ class PeriodicBoundaries(InfiniteBoundaries):
 
     def real_to_box_array(self, realArray, index = -1):
         """
-        Transforms array from real coordinates to box [0,1[.
+        Transforms array from real coordinates to box.
 
         :Parameters:
             #. realArray (numpy.ndarray): the coordinates in real space
             #. index (integer): the index of the vectors.
 
         :Returns:
-            #. boxArray (numpy.ndarray): the coordinates in box system [0,1[.
+            #. boxArray (numpy.ndarray): the coordinates in box system.
         """
         shape = realArray.shape
         if len(shape) == 2:
@@ -562,11 +577,46 @@ class PeriodicBoundaries(InfiniteBoundaries):
         :Returns:
             #. foldedArray (numpy.ndarray): the folded into box array.
         """
+        ## -1.2 % 1 = 0.8
         return boxArray % 1
 
     def fold_real_array(self, realArray, index = -1):
         """
         Folds all real coordinates between [0,boxLength[
+
+        :Parameters:
+            #. boxArray (numpy.ndarray): the box coordinates.
+
+        :Returns:
+            #. contiguousArray (numpy.ndarray): the contiguous into box array.
+        """
+        boxArray = self.real_to_box_array(realArray, index)
+        return self.box_to_real_array( self.fold_box_array(boxArray), index )
+
+    def get_contiguous_box_array(self, boxArray):
+        """
+        transform box array into a contiguous array where no box distance is
+        bigger than 0.5.
+
+        :Parameters:
+            #. realArray (numpy.ndarray): the real space coordinates.
+
+        :Returns:
+            #. foldedArray (numpy.ndarray): the folded into real coordinates box array.
+        """
+        # incrementally construct cluster starting from first point
+        diff = boxArray-boxArray[0,:]
+        # remove multiple box distances
+        intDiff = diff.astype(int)
+        barray  = boxArray-intDiff
+        diff   -= intDiff
+        # remove half box distances
+        return np.where(np.abs(diff)<0.5, barray, barray-np.sign(diff))
+
+    def get_contiguous_real_array(self, realArray, index = -1):
+        """
+        transform real array into a contiguous array where no distance is
+        bigger than half boundary conditions size
 
         :Parameters:
             #. realArray (numpy.ndarray): the real space coordinates.
@@ -575,7 +625,7 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. foldedArray (numpy.ndarray): the folded into real coordinates box array.
         """
         boxArray = self.real_to_box_array(realArray, index)
-        return self.box_to_real_array( self.fold_box_array(boxArray), index )
+        return self.box_to_real_array( self.get_contiguous_box_array(boxArray), index )
 
     def box_difference(self, boxVector, boxArray):
         """

@@ -327,14 +327,6 @@ class CrystalMaker(object):
             ops.append(tuple(item))
         assert len(ops) == len(set(ops)), "symmetry operations redundancy is not allowed"
         return ops
-        #assert all([isinstance(item, str) for item in symOps]), "symOps items must be all strings"
-        #symOps = [i.lower().strip() for i in symOps]
-        #assert len(symOps) == len(set(symOps)), "symmetry operations redundancy is not allowed"
-        #assert all([len(i)==3 for i in [i.split(',') for i in symOps]]),"symOps must be comma splittable string into a list of 3 items"
-        #for idx, item in enumerate(symOps):
-        #    item = ''.join( [i.strip() for i in item if not i.isdigit() and i not in ('/+-xyz,')] ).strip()
-        #    assert not len(item), "symmetry operation can only contain digits and the following charachters ('+','-','/','x','y','z'). symOps index %i is not "%idx
-        #return symOps
 
     def __get_atoms_definition(self, atoms):
         ## check atoms
@@ -362,6 +354,7 @@ class CrystalMaker(object):
         ## build atoms name lut and ordered position lut
         posLUT   = OrderedDict()
         namesLUT = {}
+        nlut     = {}
         for aIdx, (el,x,y,z,o) in enumerate(self.__atoms ):
             #pos = [i.replace('x',str(x)).replace('y',str(y)).replace('z',str(z)).split(',') for i in self.__symOps]
             pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
@@ -369,7 +362,10 @@ class CrystalMaker(object):
                     i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
             pos = sorted(set([tuple([eval(i)%1 for i in s]) for s in pos]))
             for p in pos:
-                nm = "%s%i"%(el,len(namesLUT)+1)
+                nlut.setdefault(el,0)
+                nlut[el] += 1
+                #nm = "%s%i"%(el,len(namesLUT)+1)
+                nm = "%s%i"%(el,nlut[el])
                 namesLUT[nm] = len(namesLUT)+1
                 _ = posLUT.setdefault(p,[]).append((el,nm,o))
         ## build atomic sites lut
@@ -470,8 +466,6 @@ class CrystalMaker(object):
         assert all([isinstance(i,int) for i in supercell]), "supercell items must integers"
         assert all([i>=1 for i in supercell]), "supercell items must be >=1"
         ## build supercell for all atomic sites
-        _segments  = copy.deepcopy(self.__unitcellSegments)
-        _sequences = copy.deepcopy(self.__unitcellSequences)
         _elements  = copy.deepcopy(self.__unitcellElements)
         _names     = copy.deepcopy(self.__unitcellNames)
         _occupancy = copy.deepcopy(self.__unitcellOccupancy)
@@ -480,8 +474,6 @@ class CrystalMaker(object):
             if i<=1:
                 continue
             coords = np.array(_boxCoords)
-            seg    = [s for s in _segments]
-            seq    = [s for s in _sequences]
             els    = [e for e in _elements]
             nms    = [n for n in _names]
             ocp    = [o for o in _occupancy]
@@ -491,15 +483,19 @@ class CrystalMaker(object):
                 _boxCoords.extend ( [list(v) for v in coords+v] )
                 _elements.extend(els)
                 _names.extend(nms)
-                if seq[-1] == '9999':
-                    s   = str(int(seg) + 1)
-                    seg = [s for _ in seg]
-                    seq = [1 for _ in seq]
-                else:
-                    seq = [s+1 for s in seq]
-                _sequences.extend(seq)
-                _segments.extend(seg)
                 _occupancy.extend(ocp)
+        ## create segment and sequences
+        ucl = len(self.__unitcellSegments)
+        seqIdx = segIdx = 0
+        _segments  = []
+        _sequences = []
+        while len(_segments)<len(_occupancy):
+            seqIdx += 1
+            if seqIdx>9999:
+                seqIdx  = 1
+                segIdx += 1
+            _segments.extend([str(segIdx)]*ucl)
+            _sequences.extend([seqIdx]*ucl)
         ## adjust sites occupancy
         boxCoords = []
         elements  = []

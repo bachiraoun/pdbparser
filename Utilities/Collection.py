@@ -6,7 +6,7 @@ This module contains a collection of methods used throughout the package.
 """
 # standard libraries imports
 from __future__ import print_function
-from collections import Counter
+from collections import Counter, OrderedDict
 import os,sys,numbers
 if sys.version_info[0] >= 3:
     basestring = str
