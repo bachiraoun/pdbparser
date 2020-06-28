@@ -12,7 +12,9 @@ if sys.version_info[0] >= 3:
 import numpy as np
 
 # pdbparser library imports
+from .Database import is_element
 from .BoundaryConditions import PeriodicBoundaries
+
 
 class CrystalMaker(object):
     """ Crystal making implementation using unitcell elements, positions
@@ -320,6 +322,7 @@ class CrystalMaker(object):
                 assert isinstance(item, (list,tuple)), "symOps must be a string or a list. symOps index %i is not "%idx
                 assert len(item) == 3, "symOps list must have 3 items. symOps index %i is not "%idx
                 assert all([isinstance(i, str) for i in item]), "symOps list item must contain only strings. symOps index %i is not "%idx
+                item = [i.lower().strip() for i in item]
             i0 = ''.join( [i.strip() for i in item[0] if not i.isdigit() and i not in ('/+-xyz,')] ).strip()
             i1 = ''.join( [i.strip() for i in item[1] if not i.isdigit() and i not in ('/+-xyz,')] ).strip()
             i2 = ''.join( [i.strip() for i in item[2] if not i.isdigit() and i not in ('/+-xyz,')] ).strip()
@@ -338,6 +341,7 @@ class CrystalMaker(object):
             assert 4<=len(item)<=5, "atoms item tuple must have 4 or 5 items. Item index %i is not"%idx
             assert isinstance(item[0], str), "atoms item tuple first item must be string. Item index %i is not"%idx
             assert 1<=len(item[0])<=2, "atoms item tuple first item string must be of length 1 or 2. Item index %i is not"%idx
+            assert is_element(item[0]), "Given atom element '%s' is not found in database"%(item[0],)
             assert not item[0].startswith("$"), "atoms item tuple first item string must not start with '$'. Item index %i is not"%idx
             assert isinstance(item[1], (int,float)), "atoms item tuple second item must be a number. Item index %i is not"%idx
             assert isinstance(item[2], (int,float)), "atoms item tuple third item must be a number. Item index %i is not"%idx
@@ -356,7 +360,6 @@ class CrystalMaker(object):
         namesLUT = {}
         nlut     = {}
         for aIdx, (el,x,y,z,o) in enumerate(self.__atoms ):
-            #pos = [i.replace('x',str(x)).replace('y',str(y)).replace('z',str(z)).split(',') for i in self.__symOps]
             pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[1].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
@@ -364,7 +367,6 @@ class CrystalMaker(object):
             for p in pos:
                 nlut.setdefault(el,0)
                 nlut[el] += 1
-                #nm = "%s%i"%(el,len(namesLUT)+1)
                 nm = "%s%i"%(el,nlut[el])
                 namesLUT[nm] = len(namesLUT)+1
                 _ = posLUT.setdefault(p,[]).append((el,nm,o))
@@ -584,7 +586,7 @@ class CrystalMaker(object):
         from pdbparser.Utilities import Database
         records = []
         rec     = copy.copy(Database.__ATOM__)
-        rec['residue_name'] = 'CUC' # crystallographic unitcell
+        rec['residue_name'] = 'CRY' # crystallographic unitcell
         for idx,el in enumerate(self.__supercellElements):
             x,y,z = realCoords[idx,:]
             rec   = copy.copy(rec)
