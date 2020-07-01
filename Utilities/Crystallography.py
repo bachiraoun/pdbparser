@@ -66,6 +66,18 @@ class CrystalMaker(object):
 
     """
     def __init__(self, symOps, atoms, unitcellBC):
+        self.__translations = (( 1, -1, -1), ( 1, -1, 0), ( 1, -1, 1),
+                               ( 1,  0, -1), ( 1,  0, 0), ( 1,  0, 1),
+                               ##
+                               ( 1,  1, -1), ( 1,  1, 0), ( 1,  1, 1),
+                               ( 0,  1, -1), ( 0,  1, 0), ( 0,  1, 1),
+                               ( 0,  0, -1),              ( 0,  0, 1),
+                               ( 0, -1, -1), ( 0, -1, 0), ( 0, -1, 1),
+                               (-1, -1, -1), (-1, -1, 0), (-1, -1, 1),
+                               ##
+                               (-1,  0, -1), (-1,  0, 0), (-1,  0, 1),
+                               (-1,  1, -1), (-1,  1, 0), (-1,  1, 1),
+                              )
         self.__symOps = self.__get_symmetry_operations(symOps)
         self.__atoms  = self.__get_atoms_definition(atoms)
         self.__build_unit_cell()
@@ -263,6 +275,27 @@ class CrystalMaker(object):
         return builder
 
     @property
+    def translations(self):
+        """tuple of the 26 neighbours translations used to create
+        every and each unitcell neighbours list. The order of the translations
+        matches the order of the neighbours in every and each unitcell
+        """
+        return self.__translations
+
+    @property
+    def unitcells(self):
+        """list of all unitcells in the created supercell. Items are dictionaries
+        of unitcell atoms 'indexes' and other unitcells 26 'neighbours' list
+        as found in the supercell
+        """
+        return self.__unitcells
+
+    @property
+    def supercell(self):
+        """supercell as (x,y,z) tuple"""
+        return self.__supercell
+
+    @property
     def symmetryAttributes(self):
         """get symmetry attribytes dictionary"""
         return {'operations': copy.deepcopy(self.__symOps),
@@ -450,6 +483,7 @@ class CrystalMaker(object):
         self.__supercellSegments  = None
         self.__supercellOccupancy = None
         self.__supercellRejected  = None
+        self.__unitcells          = None
         # set boundary conditions
         self.__unitcellBC = BC
 
@@ -486,11 +520,13 @@ class CrystalMaker(object):
                 _elements.extend(els)
                 _names.extend(nms)
                 _occupancy.extend(ocp)
-        ## create segment and sequences
+        ## create segment and sequences and unitcells
         ucl = len(self.__unitcellSegments)
         seqIdx = segIdx = 0
         _segments  = []
         _sequences = []
+        _unitcells = []
+        ucIndex    = 0
         while len(_segments)<len(_occupancy):
             seqIdx += 1
             if seqIdx>9999:
@@ -498,6 +534,8 @@ class CrystalMaker(object):
                 segIdx += 1
             _segments.extend([str(segIdx)]*ucl)
             _sequences.extend([seqIdx]*ucl)
+            _unitcells.extend([ucIndex]*ucl)
+            ucIndex += 1
         ## adjust sites occupancy
         boxCoords = []
         elements  = []
@@ -506,6 +544,7 @@ class CrystalMaker(object):
         segments  = []
         occupancy = []
         rejected  = []
+        unitcells = []
         for idx, el in enumerate(_elements):
             oc = _occupancy[idx]
             nm = _names[idx]
@@ -538,6 +577,7 @@ class CrystalMaker(object):
             names.append(nm)
             sequences.append(_sequences[idx])
             segments.append(_segments[idx])
+            unitcells.append(_unitcells[idx])
             occupancy.append(oc)
         # get supercell boundary conditions
         x = supercell[0] * self.__unitcellBC.get_vectors()[0,:]
@@ -554,6 +594,93 @@ class CrystalMaker(object):
         self.__supercellSegments  = segments
         self.__supercellOccupancy = occupancy
         self.__supercellRejected  = rejected
+        # build unitcells neighbours list
+        ucLUT = dict([(i,[]) for i in range(supercell[0]*supercell[1]*supercell[2])])
+        for idx, i in enumerate(unitcells):
+            ucLUT[i].append(idx)
+        unitcells = []
+        for i in range(supercell[0]*supercell[1]*supercell[2]):
+            neighs  = self.get_unitcell_neighbours(i)
+            pos     = self.unitcell_index_to_supercell(i)
+            unitcells.append({'indexes':ucLUT[i], 'position':pos, 'neighbours':neighs})
+        self.__unitcells = unitcells
+
+
+    def unitcell_index_to_supercell(self, i):
+        """Convert unitcell index to the supercell (x,y,z) coordinates
+
+        :Parameters:
+            #. i (int): the unit cell index ranging from 0 to
+               supercell[0] * supercell[1] * supercell[2]
+
+        :Returns:
+            #. x (int): unitcell index position in the x axis of the supercell
+            #. y (int): unitcell index position in the y axis of the supercell
+            #. z (int): unitcell index position in the z axis of the supercell
+        """
+        assert self.__supercell is not None, "supercell is not created yet"
+        sx,sy,sz = self.__supercell
+        z = int( float(i) / float(sx*sy)  )
+        i = i-z*sx*sy
+        y = int( float(i) / float(sx)  )
+        x = i-y*sx
+        return int(x),int(y),int(z)
+
+    def unitcell_supercell_to_index(self,x,y,z):
+        """Convert unitcell x,y and z in the supercell to the absolute index
+
+        :Parameters:
+            #. x (int): unitcell index position in the x axis of the supercell
+            #. y (int): unitcell index position in the y axis of the supercell
+            #. z (int): unitcell index position in the z axis of the supercell
+
+        :Returns:
+            #. i (int): the unit cell index ranging from 0 to
+               supercell[0] * supercell[1] * supercell[2]
+        """
+        assert self.__supercell is not None, "supercell is not created yet"
+        sx,sy,sz = self.__supercell
+        return int(z*sx*sy + y*sx + x)
+
+    def get_unitcell_neighbours(self, i, translations=None):
+        """compute unitcell neighbours given unitcell index
+
+        :Parameters:
+            #. i (int): the unit cell index ranging from 0 to
+               supercell[0] * supercell[1] * supercell[2]
+            #. translations (None, list): List of neighbours translations. If
+               None, the tuple of the 26 neighbours translation of a unitcell
+               will be used
+
+        :Returns:
+            #. neighbours (list): list of unitcell neighbours in the order
+               of translations
+        """
+        x,y,z = self.unitcell_index_to_supercell(i)
+        trans = self.get_supercell_neighbours(x=x,y=y,z=z,translations=translations)
+        return [self.unitcell_supercell_to_index(x,y,z) for x,y,z in trans]
+
+    def get_supercell_neighbours(self, x,y,z, translations=None):
+        """compute unitcell neighbours given unitcell x,y and z positions in
+        the supercell
+
+        :Parameters:
+            #. x (int): unitcell index position in the x axis of the supercell
+            #. y (int): unitcell index position in the y axis of the supercell
+            #. z (int): unitcell index position in the z axis of the supercell
+            #. translations (None, list): List of neighbours translations. If
+               None, the tuple of the 26 neighbours translation of a unitcell
+               will be used
+
+        :Returns:
+            #. neighbours (list): list of unitcell neighbours in the order
+               of translations
+        """
+        assert self.__supercell is not None, "supercell is not created yet"
+        sx,sy,sz = self.__supercell
+        if translations is None:
+            translations = self.__translations
+        return [[(x+t[0])%sx, (y+t[1])%sy, (z+t[2])%sz ] for t in translations]
 
     def get_supercell_real_coordinates(self):
         """compute and return supercell real atomic coordinates
