@@ -396,13 +396,13 @@ class CrystalMaker(object):
             pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[1].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
-            pos = sorted(set([tuple([eval(i)%1 for i in s]) for s in pos]))
+            pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
             for p in pos:
                 nlut.setdefault(el,0)
                 nlut[el] += 1
                 nm = "%s%i"%(el,nlut[el])
                 namesLUT[nm] = len(namesLUT)+1
-                _ = posLUT.setdefault(p,[]).append((el,nm,o))
+                posLUT.setdefault(p,[]).append((el,nm,o))
         ## build atomic sites lut
         sitesLUT = {}
         for pos in posLUT:
