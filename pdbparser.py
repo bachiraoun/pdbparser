@@ -730,7 +730,7 @@ class pdbparser(object):
         HETATM 3835 FE   HEM     1      17.140   3.115  15.066  1.00 14.14          FE3+
         """
         # it is the same format as ATOM record
-        model = self.__read_ATOM__(line, model)
+        model = self.__read_ATOM__(line=line, model=model, index=index)
         # return model
         return model
 
