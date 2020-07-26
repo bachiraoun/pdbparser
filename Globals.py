@@ -20,7 +20,9 @@ class Preferences(PREF):
         prefs = {}
         # find vmd path if it exist
         exePath = self.preferences.get("VMD_PATH", "")
-        if not os.path.exists(exePath):
+        if exePath is None:
+            exePath = ''
+        elif not os.path.exists(exePath):
             if sys.platform == "win32":
                 exePath = None
                 for p in [fname for fname in os.listdir("C:\\") if "Program Files" in fname]:
@@ -47,8 +49,7 @@ class Preferences(PREF):
                 exePath = None
                 if os.path.exists("/usr/local/bin/vmd"):
                     exePath = "/usr/local/bin/vmd"
-        if exePath is None:
-            exePath = ''
+
         prefs["VMD_PATH"] = exePath
 
         ## find pymol path if exists
