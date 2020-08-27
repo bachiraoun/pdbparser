@@ -67,10 +67,15 @@ __mol__ = __avogadroNumber__
 __eps0__ = 8.854187817e-12 # farads per meter (F/m) or in C^2 N^-1 M^-2
 __coulombConstant__ = 8.9875517873681764e+9 # =1/(4Pi*eps0) in N m^2 C^-2
 __elementaryCharge__ = 1.602176487e-19 # coulomb
-__boltzmannConstant__ = 1.3806488e-23 #J*K^-1
+__boltzmannConstant__ = 1.3806488e-23 #J*K^-1 #kg * m^2 * s^-2 * K^-1
 
 
 # __atoms_database__
+# vdwRadius: Van Dr Walls radius in Angstromg
+# neutronCohb: bound coherent scattering length in fm (1E-15 m)
+# neutronIncohb: bound incoherent scattering length in fm (1E-15 m)
+# neutronCohXs: bound coherent scattering cross section in barn (1E-24 cm2)
+# neutronIncohXs: bound incoherent scattering cross section in barn (1E-24 cm2)
 __atoms_database__ = OrderedDict()
 __atoms_database__["xx"] = {'name':'Dummy'          ,'symbol':'Xx'  ,'group':0   ,'atomicNumber':0    ,'vdwRadius':0.0   ,'neutronCohb':0.0              ,'neutronIncohb':0.0            ,'neutronCohXs':0.0      ,'neutronIncohXs':0.0     ,'atomicWeight':0.0      ,'covalentRadius':0.0   ,'equal':1.0  ,'atomicFormFactor':{}}
 __atoms_database__["h"]  = {'name':'Hydrogen'       ,'symbol':'H'   ,'group':1   ,'atomicNumber':1    ,'vdwRadius':1.2   ,'neutronCohb':-3.739           ,'neutronIncohb':None           ,'neutronCohXs':1.7568   ,'neutronIncohXs':80.26   ,'atomicWeight':1.008    ,'covalentRadius':0.32  ,'equal':1.0  ,'atomicFormFactor':{0: {'a1': 0.489918, 'b4': 2.20159, 'a3': 0.196767, 'a2': 0.262003, 'a4': 0.049879, 'b2': 7.74039, 'b3': 49.5519, 'c': 0.001305, 'b1': 20.6593}, -1: {'a1': 0.897661, 'b4': 3.56709, 'a3': 0.415815, 'a2': 0.565616, 'a4': 0.116973, 'b2': 15.187, 'b3': 186.576, 'c': 0.002389, 'b1': 53.1368}}}

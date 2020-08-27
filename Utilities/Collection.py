@@ -185,43 +185,6 @@ def get_atomic_form_factor(q, element, charge=0):
     return t1+t2+t3+t4+c
 
 
-#def get_normalized_weighting(numbers, weights):
-#    """
-#    Calculates the normalized weighting scheme for a set of elements.\n
-#    :Parameters:
-#        #. numbers (dictionary): The numbers of elements dictionary. keys are the elements and values are the numbers of elements in the system
-#        #. weights (dictionary): the weight of every element. keys are the elements and values are the weights. weights must have the same length.
-#
-#    :Returns:
-#        #. normalizedWeights (dictionary): the normalized weighting scheme for every pair of elements.
-#    """
-#    assert isinstance(numbers, dict), Logger.error("numbers must be a dictionary where values are the number of elements")
-#    assert isinstance(weights, dict), Logger.error("weights must be a dictionary where values are the weights of elements")
-#    assert set(numbers.keys())==set(weights.keys()), Logger.error("numbers and weights must have the same dictionary keys. numbers:%s    weights:%s"%(numbers.keys(), weights.keys()))
-#    elements = list(weights)
-#    nelements = [float(numbers[el]) for el in elements]
-#    totalNumberOfElements = sum(nelements)
-#    molarFraction = [n/totalNumberOfElements for n in nelements]
-#    # total weights
-#    totalWeight = sum([molarFraction[idx]*weights[elements[idx]] for idx in range(len(elements))])**2
-#    # calculate weights
-#    normalizedWeights = {}
-#    for idx1 in range(len(elements)):
-#        el1 = elements[idx1]
-#        b1 = weights[el1]
-#        mf1 = molarFraction[idx1]
-#        for idx2 in range(len(elements)):
-#            el2 = elements[idx2]
-#            b2 = weights[el2]
-#            mf2 = molarFraction[idx2]
-#            # get pair elements key
-#            pair = el1+'-'+el2
-#            if el2+'-'+el1 in normalizedWeights:
-#                normalizedWeights[el2+'-'+el1] += mf1*mf2*b1*b2/totalWeight
-#            else:
-#                normalizedWeights[pair] = mf1*mf2*b1*b2/totalWeight
-#    return normalizedWeights
-
 def get_normalized_weighting(numbers, weights, pairsWeight=None):
     """
     Calculates the normalized weighting scheme for a set of elements.
