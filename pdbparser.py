@@ -820,8 +820,9 @@ class pdbparser(object):
                     origxn = True ,\
                     scalen = True ,\
                     anisou = False,
-                    coordinates=coordinates,
-                    boundaryConditions = boundaryConditions):
+                    coordinates=None,
+                    highResolutionCoords=False,
+                    boundaryConditions = None):
         # write pdbparser header
         fd.write('REMARK    this file is generated using %r package' %self.__class__.__name__)
         fd.write('\n')
@@ -856,6 +857,12 @@ class pdbparser(object):
                 assert isinstance(additionalRemarks, (list, tuple))
             for remark in additionalRemarks:
                 fd.write('REMARK    %s' %remark)
+        # high resolution coordinates
+        if highResolutionCoords:
+            s = 200
+            for i,c in enumerate('XYZ'):
+                for j in range(0, coordinates.shape[0], s):
+                    fd.write( 'REMARK    HR_%s --> '%c + ', '.join(['%.6f'%n for n in coordinates[j:j+s,i]]) )
         # write structure
         if structure:
             structure = STR('%s'%self.crystallographicStructure['record_name']).ljust(6, " ")[:6]  +\
@@ -1346,11 +1353,14 @@ class pdbparser(object):
         # read lines
         model = None
         index = -1
+        HR_X  = []
+        HR_Y  = []
+        HR_Z  = []
         for line in fd:
             index += 1
             if line[0:6].strip() not in self.__RECORD_NAMES__:
                 # headings
-                if "REMARK    Boundary Conditions: " in line:
+                if line.startswith("REMARK    Boundary Conditions: "):
                     bcVectors = line.split("REMARK    Boundary Conditions: ")[1].strip().split()
                     if not len(bcVectors)==9:
                         Logger.warn("Wrong boundary conditions line '%s' format found. Line ignored"%line)
@@ -1365,11 +1375,27 @@ class pdbparser(object):
                         bc = PeriodicBoundaries()
                         bc.set_vectors(bcVectors)
                         self.set_boundary_conditions(bc)
+                elif line.startswith('REMARK    HR_X -->'):
+                    HR_X.extend( [float(i) for i in l.split('REMARK    HR_X -->')[-1].split(',')] )
+                elif line.startswith('REMARK    HR_Y -->'):
+                    HR_Y.extend( [float(i) for i in l.split('REMARK    HR_Y -->')[-1].split(',')] )
+                elif line.startswith('REMARK    HR_Z -->'):
+                    HR_Z.extend( [float(i) for i in l.split('REMARK    HR_Z -->')[-1].split(',')] )
                 else:
                     self.headings.append(line)
             else:
                 methodToCall = self.__RECORD_NAMES__[ line[0:6].strip() ]
                 model = getattr(self, methodToCall)(line=line, model=model, index=index)
+        # set high resolution coordinates
+        if len(HR_X)==len(HR_Y)==len(HR_Z):
+            if len(HR_X)!=0:
+                if len(HR_X) != len(self.records):
+                    Logger.warn("High resolution coordinates length not matching pdb.")
+                else:
+                    for i,r in enumerate(self.records):
+                        r["coordinates_x"] = HR_X[i]
+                        r["coordinates_y"] = HR_Y[i]
+                        r["coordinates_z"] = HR_Z[i]
         # close file
         if not isinstance(filePath, (list, tuple)):
             fd.close()
@@ -1385,6 +1411,7 @@ class pdbparser(object):
                    scalen = True ,\
                    anisou = False,\
                    coordinates=None,
+                   highResolutionCoords=False,
                    boundaryConditions=None):
         """
         Export the current pdb into .pdb file.\n
@@ -1401,6 +1428,7 @@ class pdbparser(object):
             #. scalen (boolean): export including the scalen.
             #. anisou (boolean): export including the anisou.
             #. coordinates (None, np.ndarray): export pdb using different coordinates. If None, use pdb coordinates.
+            #. highResolutionCoords (boolean): whether to add high resolution coordinates to remarks.
             #. boundaryConditions (None, PeriodicBoundaries): Export boundary conditions other than pdbparser instance ones.
 
         :Returns:
@@ -1421,6 +1449,7 @@ class pdbparser(object):
                                 scalen=scalen,\
                                 anisou=anisou,
                                 coordinates=coordinates,
+                                highResolutionCoords=highResolutionCoords,
                                 boundaryConditions=boundaryConditions)
         else:
             # try to open file
@@ -1451,6 +1480,7 @@ class pdbparser(object):
                              scalen=scalen,\
                              anisou=anisou,\
                              coordinates=coordinates,
+                             highResolutionCoords=highResolutionCoords,
                              boundaryConditions=boundaryConditions)
             # close file
             pdbContent = None
