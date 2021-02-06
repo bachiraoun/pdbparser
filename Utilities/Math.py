@@ -91,7 +91,8 @@ def get_superposition_transformation_elements(weights, totalWeight, refArray, ar
     b = refArray[:,1]*weights
     c = refArray[:,2]*weights
     r = np.array([a,b,c])/totalWeight
-    refArrayCOM = np.sum(r,1)
+    refArrayCOM = np.sum(r, axis=0)/totalWeight
+    refArrayS1  = np.sum(r,1)
     cross = np.dot(r,r_ref)
     possq = weights*np.add.reduce(refArray*refArray,1)/totalWeight+\
             weights*np.add.reduce(r_ref*r_ref,1)/totalWeight
@@ -113,7 +114,7 @@ def get_superposition_transformation_elements(weights, totalWeight, refArray, ar
             k[i, j] = k[j, i]
     k = 2.*k
     for i in range(4):
-        k[i, i] = k[i, i] + possq - np.add.reduce(refArrayCOM*refArrayCOM)
+        k[i, i] = k[i, i] + possq - np.add.reduce(refArrayS1*refArrayS1)
     # get eigen values
     e, v = np.linalg.eig(k)
     i = np.argmin(e)
