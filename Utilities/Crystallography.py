@@ -109,7 +109,8 @@ class CrystalMaker(object):
 
 
         :Parameters:
-            #. path (string): cif file path
+            #. path (string, list, tuple): cif file path or a list of cif file
+               lines
 
         :Returns:
             #. maker (CrystalMaker): CrystalMaker instance
@@ -149,9 +150,15 @@ class CrystalMaker(object):
             return splitted
 
         def parse_file(path):
-            assert os.path.isfile(path), "Given cif file path '%s' is not found"%path
-            with open(path, 'r') as fd:
-                cifLines = [l.strip() for l in fd.readlines()]
+            if isinstance(path, (list,tuple)):
+                cifLines = []
+                for l in path:
+                    assert isinstance(l, basestring), LOGGER.error("cif list items must be all strings")
+                    cifLines.append(l.strip())
+            else:
+                assert os.path.isfile(path), "Given cif file path '%s' is not found"%path
+                with open(path, 'r') as fd:
+                    cifLines = [l.strip() for l in fd.readlines()]
                 #cifLines = [l for l in cifLines if not l.startswith('#') and len(l)]
             attributes = []
             loopBlocks = []
@@ -372,18 +379,18 @@ class CrystalMaker(object):
         for idx, item in enumerate(atoms):
             assert isinstance(item, (list,tuple)), "atoms item must be a tuple. Item index %i is not"%idx
             assert 4<=len(item)<=5, "atoms item tuple must have 4 or 5 items. Item index %i is not"%idx
-            assert isinstance(item[0], str), "atoms item tuple first item must be string. Item index %i is not"%idx
-            assert 1<=len(item[0])<=2, "atoms item tuple first item string must be of length 1 or 2. Item index %i is not"%idx
+            assert isinstance(item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not"%idx
+            assert 1<=len(item[0])<=2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not"%idx
             assert is_element(item[0]), "Given atom element '%s' is not found in database"%(item[0],)
-            assert not item[0].startswith("$"), "atoms item tuple first item string must not start with '$'. Item index %i is not"%idx
-            assert isinstance(item[1], (int,float)), "atoms item tuple second item must be a number. Item index %i is not"%idx
-            assert isinstance(item[2], (int,float)), "atoms item tuple third item must be a number. Item index %i is not"%idx
-            assert isinstance(item[3], (int,float)), "atoms item tuple fourth item must be a number. Item index %i is not"%idx
+            assert not item[0].startswith("$"), "atoms item tuple first item (element) string must not start with '$'. Item index %i is not"%idx
+            assert isinstance(item[1], (int,float)), "atoms item tuple second item (x) must be a number. Item index %i is not"%idx
+            assert isinstance(item[2], (int,float)), "atoms item tuple third item (y) must be a number. Item index %i is not"%idx
+            assert isinstance(item[3], (int,float)), "atoms item tuple fourth item (z) must be a number. Item index %i is not"%idx
             if len(item)==4:
                 item = list(item)
                 item.append(1)
-            assert isinstance(item[4], (int,float)), "atoms item tuple fifth item if given must be a number. Item index %i is not"%idx
-            assert 0<=item[4]<=1, "atoms item tuple fifth item if given must be a >=0 and <=1. Item index %i is not"%idx
+            assert isinstance(item[4], (int,float)), "atoms item tuple fifth item (occupancy) if given must be a number. Item index %i is not"%idx
+            assert 0<=item[4]<=1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not"%idx
             newAtoms.append(tuple(item))
         return newAtoms
 
