@@ -152,12 +152,12 @@ def orient(indexes, pdb, axis, records_axis):
     # normalize vector
     axisNorm = np.linalg.norm(axis)
     assert axisNorm>0, "axis returned 0 norm"
-    axis = np.array(axis, dtype=np.float)/axisNorm
+    axis = np.array(axis, dtype=float)/axisNorm
 
     # normalize records_axis
     records_axisNorm = np.linalg.norm(records_axis)
     assert records_axisNorm>0, "record_axis returned 0 norm"
-    records_axis = np.array(records_axis, dtype=np.float)/records_axisNorm
+    records_axis = np.array(records_axis, dtype=float)/records_axisNorm
 
     # calculate rotation Angle
     dotProduct = np.dot(records_axis, axis)

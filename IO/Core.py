@@ -160,7 +160,7 @@ class DCDFile(object):
         Reads a configuration of the DCD file.
         """
         if self.has_pbc_data:
-            unit_cell = np.array(self.__binary.get_record('6d'), dtype = np.float)
+            unit_cell = np.array(self.__binary.get_record('6d'), dtype = float)
             a, gamma, b, beta, alpha, c = unit_cell
             if -1. < alpha < 1. and -1. < beta < 1. and -1. < gamma < 1.:
                 # assume the angles are stored as cosines
@@ -172,9 +172,9 @@ class DCDFile(object):
         else:
             unit_cell = None
         format = '%df' % self.natoms
-        x = np.array(self.__binary.get_record(format), dtype = np.float32)
-        y = np.array(self.__binary.get_record(format), dtype = np.float32)
-        z = np.array(self.__binary.get_record(format), dtype = np.float32)
+        x = np.array(self.__binary.get_record(format), dtype = float)
+        y = np.array(self.__binary.get_record(format), dtype = float)
+        z = np.array(self.__binary.get_record(format), dtype = float)
         if self.has_4d:
             self.__binary.skip_record()
         return unit_cell, x, y, z

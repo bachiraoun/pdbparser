@@ -1764,7 +1764,7 @@ class pdbTrajectory(object):
         """
         return all coordinates as numpy.array copy of shape (numberOfConfigurations,numberOfAtoms,3)
         """
-        return np.array(self._coordinates, dtype=np.float32)
+        return np.array(self._coordinates, dtype=float)
 
     @property
     def simulationBox(self):
@@ -2219,7 +2219,7 @@ class pdbTrajectory(object):
         # add time
         self._time.insert(index, time)
         # add configuration coordinates
-        self._coordinates.insert(index, np.float32(pdb.coordinates))
+        self._coordinates.insert(index, float(pdb.coordinates))
 
     def append_configuration(self, pdb, vectors, time):
         """

@@ -57,7 +57,7 @@ class Preferences(PREF):
         if not os.path.exists(exePath):
             if sys.platform == "win32":
                 exePath = "C:\\Program/ Files\\PyMOL\\PyMOL"
-                if not os.path.exist(exePath):
+                if not os.path.exists(exePath):
                     exePath = None
             elif sys.platform == "darwin":
                 #"/Applications/PyMOL.app/Contents/bin/pymol"
@@ -69,7 +69,7 @@ class Preferences(PREF):
                         exePath = None
                 if exePath is not None:
                     exePath = os.path.join(exePath, files[0], 'Contents', 'bin', 'pymol')
-                    if not os.path.exist(exePath):
+                    if not os.path.exists(exePath):
                         exePath = None
             else:
                 exePath = "/usr/local/bin/pymol"

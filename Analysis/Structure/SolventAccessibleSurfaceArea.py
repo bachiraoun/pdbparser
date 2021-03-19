@@ -156,9 +156,9 @@ class SolventAccessibleSurfaceArea(Analysis):
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         # sasa
-        self.results['sasa'] =  np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['sasa'] =  np.zeros((len(self.configurationsIndexes)), dtype=float)
         # surface points
         self.results['surface points'] =  []
 

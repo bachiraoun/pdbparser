@@ -299,28 +299,28 @@ class PeriodicBoundaries(InfiniteBoundaries):
             index = len(self)
         # check vectorsArray type
         if isinstance(vectorsArray, (list, tuple)):
-            vectorsArray = np.array(vectorsArray, dtype = np.float)
+            vectorsArray = np.array(vectorsArray, dtype = float)
         else:
             assert isinstance(vectorsArray, (Number, np.ndarray)), "vectors can be either None, number, numpy.ndarray"
         # get directBasisVectors matrix
         if isinstance(vectorsArray, Number):
             directBasisVectors = np.array( [ [vectorsArray, 0, 0],\
                                              [0, vectorsArray, 0],\
-                                             [0, 0, vectorsArray] ], dtype = np.float )
+                                             [0, 0, vectorsArray] ], dtype = float )
         elif vectorsArray.shape == (1,) or vectorsArray.shape == (1,1):
             directBasisVectors = np.array( [ [vectorsArray[0], 0, 0],\
                                              [0, vectorsArray[0], 0],\
-                                             [0, 0, vectorsArray[0]] ], dtype = np.float )
+                                             [0, 0, vectorsArray[0]] ], dtype = float )
         elif vectorsArray.shape == (3,) or vectorsArray.shape == (3,1):
             directBasisVectors = np.array( [ [vectorsArray[0], 0, 0],\
                                              [0, vectorsArray[1], 0],\
-                                             [0, 0, vectorsArray[2]] ], dtype = np.float )
+                                             [0, 0, vectorsArray[2]] ], dtype = float )
         elif vectorsArray.shape == (9,) or vectorsArray.shape == (9,1):
             directBasisVectors = np.array( [ [vectorsArray[0], vectorsArray[1], vectorsArray[2]],\
                                              [vectorsArray[3], vectorsArray[4], vectorsArray[5]],\
-                                             [vectorsArray[6], vectorsArray[7], vectorsArray[8]] ], dtype = np.float )
+                                             [vectorsArray[6], vectorsArray[7], vectorsArray[8]] ], dtype = float )
         elif vectorsArray.shape == (3,3):
-            directBasisVectors = np.array(vectorsArray, dtype = np.float)
+            directBasisVectors = np.array(vectorsArray, dtype = float)
         else:
             raise ValueError('incompatible vectorsArray format')
         self._directBasisVectors.insert(index, directBasisVectors)

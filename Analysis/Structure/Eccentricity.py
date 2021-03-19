@@ -108,19 +108,19 @@ class Eccentricity(Analysis):
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         # moments of inertia
         for axis in ['xx','xy','xz','yy','yz','zz']:
-            self.results['moment_of_inertia_%s' %axis] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+            self.results['moment_of_inertia_%s' %axis] = np.zeros((len(self.configurationsIndexes)), dtype=float)
         # semi-axes
         for axis in ['a','b','c']:
-            self.results['semiaxis_%s' %axis] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+            self.results['semiaxis_%s' %axis] = np.zeros((len(self.configurationsIndexes)), dtype=float)
         # eccentricity
-        self.results['eccentricity'] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['eccentricity'] = np.zeros((len(self.configurationsIndexes)), dtype=float)
         # ratio of largest to smallest
-        self.results['ratio_of_largest_to_smallest'] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['ratio_of_largest_to_smallest'] = np.zeros((len(self.configurationsIndexes)), dtype=float)
         # radius of gyration
-        self.results['radius_of_gyration'] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['radius_of_gyration'] = np.zeros((len(self.configurationsIndexes)), dtype=float)
 
     def step(self, index):
         """

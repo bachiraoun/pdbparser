@@ -51,12 +51,12 @@ class InsideCylinderDistances(Analysis):
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         # mean minimum distances
-        self.results['mean_minimum_distance'] = np.zeros( self.numberOfSteps, dtype=np.float)
-        self.results['minimum_distance']      = np.zeros( self.numberOfSteps, dtype=np.float)
-        self.results['mean_shell_thickness']  = np.zeros( self.numberOfSteps, dtype=np.float)
-        self.results['cylinder_radius']       = np.zeros( self.numberOfSteps, dtype=np.float)
+        self.results['mean_minimum_distance'] = np.zeros( self.numberOfSteps, dtype=float)
+        self.results['minimum_distance']      = np.zeros( self.numberOfSteps, dtype=float)
+        self.results['mean_shell_thickness']  = np.zeros( self.numberOfSteps, dtype=float)
+        self.results['cylinder_radius']       = np.zeros( self.numberOfSteps, dtype=float)
 
 
     def step(self, index):

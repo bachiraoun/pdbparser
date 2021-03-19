@@ -55,7 +55,7 @@ class CylindricalRadialDensity(Analysis):
         # set radii
         assert isinstance(radii, (list, tuple, set, np.ndarray)), Logger.error("radii must be a list or numpy.array")
         try:
-            radii = np.array(sorted(set(radii)), dtype=np.float32)
+            radii = np.array(sorted(set(radii)), dtype=float)
         except:
             raise Logger.error("radii element must be numbers")
         assert len(radii.shape)==1, Logger.error("radii must be uni-dimensional")
@@ -76,7 +76,7 @@ class CylindricalRadialDensity(Analysis):
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         # radii
         self.results['radii'] = (self.radii[1:]+self.radii[0:-1])/2.
         #volumes
@@ -89,21 +89,21 @@ class CylindricalRadialDensity(Analysis):
         self.numberDensity = {}
         # initialize results per element
         for el in set(self.elements):
-            self.results['CumulCylRadialDenDist_%s'%el] = np.zeros( len(self.radii)-1, dtype=np.float)
-            self.results['CumulCylRadialDen_%s'%el]     = np.zeros( len(self.radii)-1, dtype=np.float)
-            self.results['CylRadialDenDist_%s'%el]      = np.zeros( len(self.radii)-1, dtype=np.float)
-            self.results['CylRadialDen_%s'%el]          = np.zeros( len(self.radii)-1, dtype=np.float)
-            self.results['insideAtomsNumber_%s'%el]     = np.zeros( self.numberOfSteps, dtype=np.float)
-            self.results['numberDensity_%s'%el]         = np.zeros( self.numberOfSteps, dtype=np.float)
-            self.results['density_%s'%el]               = np.zeros( self.numberOfSteps, dtype=np.float)
+            self.results['CumulCylRadialDenDist_%s'%el] = np.zeros( len(self.radii)-1, dtype=float)
+            self.results['CumulCylRadialDen_%s'%el]     = np.zeros( len(self.radii)-1, dtype=float)
+            self.results['CylRadialDenDist_%s'%el]      = np.zeros( len(self.radii)-1, dtype=float)
+            self.results['CylRadialDen_%s'%el]          = np.zeros( len(self.radii)-1, dtype=float)
+            self.results['insideAtomsNumber_%s'%el]     = np.zeros( self.numberOfSteps, dtype=float)
+            self.results['numberDensity_%s'%el]         = np.zeros( self.numberOfSteps, dtype=float)
+            self.results['density_%s'%el]               = np.zeros( self.numberOfSteps, dtype=float)
         # initialize totals
-        self.results['CumulCylRadialDenDist_total'] = np.zeros( len(self.radii)-1, dtype=np.float)
-        self.results['CumulCylRadialDen_total']     = np.zeros( len(self.radii)-1, dtype=np.float)
-        self.results['CylRadialDenDist_total']      = np.zeros( len(self.radii)-1, dtype=np.float)
-        self.results['CylRadialDen_total']          = np.zeros( len(self.radii)-1, dtype=np.float)
-        self.results['insideAtomsNumber_total']     = np.zeros( self.numberOfSteps, dtype=np.float)
-        self.results['numberDensity_total']         = np.zeros( self.numberOfSteps, dtype=np.float)
-        self.results['density_total']               = np.zeros( self.numberOfSteps, dtype=np.float)
+        self.results['CumulCylRadialDenDist_total'] = np.zeros( len(self.radii)-1, dtype=float)
+        self.results['CumulCylRadialDen_total']     = np.zeros( len(self.radii)-1, dtype=float)
+        self.results['CylRadialDenDist_total']      = np.zeros( len(self.radii)-1, dtype=float)
+        self.results['CylRadialDen_total']          = np.zeros( len(self.radii)-1, dtype=float)
+        self.results['insideAtomsNumber_total']     = np.zeros( self.numberOfSteps, dtype=float)
+        self.results['numberDensity_total']         = np.zeros( self.numberOfSteps, dtype=float)
+        self.results['density_total']               = np.zeros( self.numberOfSteps, dtype=float)
 
 
     def step(self, index):
@@ -231,7 +231,7 @@ class CylindricalDiskDensity(Analysis):
         # set length
         assert isinstance(lengths, (list, tuple, set, np.ndarray)), Logger.error("lengths must be a list or numpy.array")
         try:
-            lengths = np.array(sorted(set(lengths)), dtype=np.float32)
+            lengths = np.array(sorted(set(lengths)), dtype=float)
         except:
             raise Logger.error("lengths element must be numbers")
         assert len(lengths.shape)==1, Logger.error("lengths must be uni-dimensional")
@@ -251,7 +251,7 @@ class CylindricalDiskDensity(Analysis):
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         # radii
         self.results['lengths'] = (self.lengths[1:]+self.lengths[0:-1])/2.
         #volumes
@@ -264,21 +264,21 @@ class CylindricalDiskDensity(Analysis):
         self.numberDensity = {}
         # initialize results per element
         for el in set(self.elements):
-            self.results['CumulCylDiskDenDist_%s'%el]   = np.zeros( len(self.lengths)-1, dtype=np.float)
-            self.results['CumulCylDiskDen_%s'%el]       = np.zeros( len(self.lengths)-1, dtype=np.float)
-            self.results['CylDiskDenDist_%s'%el]        = np.zeros( len(self.lengths)-1, dtype=np.float)
-            self.results['CylDiskDen_%s'%el]            = np.zeros( len(self.lengths)-1, dtype=np.float)
-            self.results['insideAtomsNumber_%s'%el]     = np.zeros( self.numberOfSteps, dtype=np.float)
-            self.results['numberDensity_%s'%el]         = np.zeros( self.numberOfSteps, dtype=np.float)
-            self.results['density_%s'%el]               = np.zeros( self.numberOfSteps, dtype=np.float)
+            self.results['CumulCylDiskDenDist_%s'%el]   = np.zeros( len(self.lengths)-1, dtype=float)
+            self.results['CumulCylDiskDen_%s'%el]       = np.zeros( len(self.lengths)-1, dtype=float)
+            self.results['CylDiskDenDist_%s'%el]        = np.zeros( len(self.lengths)-1, dtype=float)
+            self.results['CylDiskDen_%s'%el]            = np.zeros( len(self.lengths)-1, dtype=float)
+            self.results['insideAtomsNumber_%s'%el]     = np.zeros( self.numberOfSteps, dtype=float)
+            self.results['numberDensity_%s'%el]         = np.zeros( self.numberOfSteps, dtype=float)
+            self.results['density_%s'%el]               = np.zeros( self.numberOfSteps, dtype=float)
         # initialize totals
-        self.results['CumulCylDiskDenDist_total']   = np.zeros( len(self.lengths)-1, dtype=np.float)
-        self.results['CumulCylDiskDen_total']       = np.zeros( len(self.lengths)-1, dtype=np.float)
-        self.results['CylDiskDenDist_total']        = np.zeros( len(self.lengths)-1, dtype=np.float)
-        self.results['CylDiskDen_total']            = np.zeros( len(self.lengths)-1, dtype=np.float)
-        self.results['insideAtomsNumber_total']     = np.zeros( self.numberOfSteps, dtype=np.float)
-        self.results['numberDensity_total']         = np.zeros( self.numberOfSteps, dtype=np.float)
-        self.results['density_total']               = np.zeros( self.numberOfSteps, dtype=np.float)
+        self.results['CumulCylDiskDenDist_total']   = np.zeros( len(self.lengths)-1, dtype=float)
+        self.results['CumulCylDiskDen_total']       = np.zeros( len(self.lengths)-1, dtype=float)
+        self.results['CylDiskDenDist_total']        = np.zeros( len(self.lengths)-1, dtype=float)
+        self.results['CylDiskDen_total']            = np.zeros( len(self.lengths)-1, dtype=float)
+        self.results['insideAtomsNumber_total']     = np.zeros( self.numberOfSteps, dtype=float)
+        self.results['numberDensity_total']         = np.zeros( self.numberOfSteps, dtype=float)
+        self.results['density_total']               = np.zeros( self.numberOfSteps, dtype=float)
 
 
     def step(self, index):

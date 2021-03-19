@@ -57,10 +57,10 @@ class MeanSquareDisplacement(Analysis):
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         # mean square displacements
         for el in set(self.elements):
-            self.results['msd_%s' %el] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+            self.results['msd_%s' %el] = np.zeros((len(self.configurationsIndexes)), dtype=float)
 
     def step(self, index):
         """
@@ -186,26 +186,26 @@ class MeanSquareDisplacementInCylinder(Analysis):
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         self.results['histogram_edges'] = self.histBin*np.array(range(int(len(self.configurationsIndexes)/self.histBin)+1))
 
         # mean square displacements
         for el in set(self.elements):
             self.results['residency_time_inside_%s' %el]  = [0.,0]
             self.results['residency_time_outside_%s' %el] = [0.,0]
-            self.results['msd_inside_%s' %el]  = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
-            self.results['msd_inside_axial_%s' %el]  = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
-            self.results['msd_inside_transversal_%s' %el]  = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
-            self.results['msd_outside_%s' %el] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
-            self.results['histogram_inside_%s' %el]  = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=np.float)
-            self.results['histogram_outside_%s' %el] = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=np.float)
+            self.results['msd_inside_%s' %el]  = np.zeros((len(self.configurationsIndexes)), dtype=float)
+            self.results['msd_inside_axial_%s' %el]  = np.zeros((len(self.configurationsIndexes)), dtype=float)
+            self.results['msd_inside_transversal_%s' %el]  = np.zeros((len(self.configurationsIndexes)), dtype=float)
+            self.results['msd_outside_%s' %el] = np.zeros((len(self.configurationsIndexes)), dtype=float)
+            self.results['histogram_inside_%s' %el]  = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=float)
+            self.results['histogram_outside_%s' %el] = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=float)
 
         # normalization
         self.insideNormalization = {}
         self.outsideNormalization = {}
         for el in set(self.elements):
-            self.insideNormalization[el]  = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
-            self.outsideNormalization[el] = np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+            self.insideNormalization[el]  = np.zeros((len(self.configurationsIndexes)), dtype=float)
+            self.outsideNormalization[el] = np.zeros((len(self.configurationsIndexes)), dtype=float)
 
     def __get_cylinder_properties__(self):
         cylCenters  = []
@@ -416,8 +416,8 @@ class MeanSquareDisplacementInCylinder(Analysis):
         self.results['residency_time_inside_total']  /= len(set(self.elements))
         self.results['residency_time_outside_total'] /= len(set(self.elements))
         # get histogram time
-        self.results['histogram_inside_total']  = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=np.float)
-        self.results['histogram_outside_total'] = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=np.float)
+        self.results['histogram_inside_total']  = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=float)
+        self.results['histogram_outside_total'] = np.zeros((int(len(self.configurationsIndexes)/self.histBin)+1), dtype=float)
         for el in set(self.elements):
             self.results['histogram_inside_total']  += self.results['histogram_inside_%s' %el]
             self.results['histogram_outside_total'] += self.results['histogram_outside_%s' %el]

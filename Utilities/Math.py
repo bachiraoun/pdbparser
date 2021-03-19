@@ -98,7 +98,7 @@ def get_superposition_transformation_elements(weights, totalWeight, refArray, ar
             weights*np.add.reduce(r_ref*r_ref,1)/totalWeight
     possq = np.sum(possq)
     # calculate k
-    k = np.zeros((4, 4), np.float)
+    k = np.zeros((4, 4), float)
     k[0, 0] = -cross[0, 0]-cross[1, 1]-cross[2, 2]
     k[0, 1] = cross[1, 2]-cross[2, 1]
     k[0, 2] = cross[2, 0]-cross[0, 2]

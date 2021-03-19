@@ -612,7 +612,7 @@ class AxisDefinition(Definition):
             assert len(value)==2, Logger.error("vector axis values must be a list of 2 points coordinates")
             assert len([list(item) for item in value if isinstance(item, (list, tuple, set, np.ndarray))])==2, Logger.error("every vector axis point coordinates must be a list")
             try:
-                value = [np.array(item, dtype=np.float32) for item in value if len(item)==3]
+                value = [np.array(item, dtype=float) for item in value if len(item)==3]
             except:
                 raise Logger.error("every vector axis point coordinates must be a list of three numbers")
             else:

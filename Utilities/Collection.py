@@ -341,18 +341,18 @@ def get_random_perpendicular_vector(vector):
     assert vectorNorm, Logger.error("vector returned 0 norm")
     # easy cases
     if np.abs(vector[0])<1e-6:
-        return np.array([1,0,0], dtype=np.float32)
+        return np.array([1,0,0], dtype=float)
     elif np.abs(vector[1])<1e-6:
-        return np.array([0,1,0], dtype=np.float32)
+        return np.array([0,1,0], dtype=float)
     elif np.abs(vector[2])<1e-6:
-        return np.array([0,0,1], dtype=np.float32)
+        return np.array([0,0,1], dtype=float)
     # generate random vector
     randVect = 1-2*np.random.random(3)
     randvect = np.array([vector[idx]*randVect[idx] for idx in range(3)])
     # get perpendicular vector
     perpVector = np.cross(randvect,vector)
     # return
-    return np.array(perpVector/np.linalg.norm(perpVector), dtype=np.float32)
+    return np.array(perpVector/np.linalg.norm(perpVector), dtype=float)
 
 
 def get_orthonormal_axes(vector1, vector2, force = False):

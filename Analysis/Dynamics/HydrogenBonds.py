@@ -241,17 +241,17 @@ class HydrogenBonds(Analysis):
             if self.elements[idx].lower() not in ('o','n','f'):
                 Logger.warn("acceptorAtomsIndexes index '%s' is found to be '%s' instead of an oxygen 'o' or nitrogen 'n' or fluorine 'f'"%(idx, self.elements[idx].lower()))
         # needed variables for analysis
-        self.bondsDistances = -1*np.ones( (len(self.hydrogenAtomsIndexes), len(self.time)) ,dtype=np.float)
-        self.bondsAngles    = -1*np.ones( (len(self.hydrogenAtomsIndexes), len(self.time)) ,dtype=np.float)
+        self.bondsDistances = -1*np.ones( (len(self.hydrogenAtomsIndexes), len(self.time)) ,dtype=float)
+        self.bondsAngles    = -1*np.ones( (len(self.hydrogenAtomsIndexes), len(self.time)) ,dtype=float)
         self.acceptorsIndex = -1*np.ones( (len(self.hydrogenAtomsIndexes), len(self.time)) ,dtype=np.long)
 
     def __initialize_results__(self):
         # time
-        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=np.float)
+        self.results['time'] = np.array([self.time[idx] for idx in self.configurationsIndexes], dtype=float)
         # hbonds time
-        self.results['hbonds_time'] =  np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['hbonds_time'] =  np.zeros((len(self.configurationsIndexes)), dtype=float)
         # number of hBonds
-        self.results['number_of_hbonds'] =  np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['number_of_hbonds'] =  np.zeros((len(self.configurationsIndexes)), dtype=float)
         # hbonds time histogram
         self.results['histogram_bins'] = (self.bins[1:]+self.bins[0:-1])/2.0
         self.results['hbonds_distribution'] = 0.0*self.results['histogram_bins']
@@ -259,15 +259,15 @@ class HydrogenBonds(Analysis):
         self.shellsResultKeys = []
         shell = "0-->%sA_Infps"%(str(self.bondLength))
         self.shellsResultKeys.append(shell)
-        self.results['hbonds_%s_time'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['hbonds_%s_time'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=float)
         self.results['hbonds_%s_distribution'%shell] = 0.0*self.results['histogram_bins']
-        self.results['number_of_hbonds_%s'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+        self.results['number_of_hbonds_%s'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=float)
         for idx in range(len(self.toleranceShells)):
             shell = "%s-->%sA_%sps"%(str(self.bondLength+self.cumsumToleranceShells[idx]-self.toleranceShells[idx]), str(self.bondLength+self.cumsumToleranceShells[idx]), str(self.toleranceTime[idx]))
             self.shellsResultKeys.append(shell)
-            self.results['hbonds_%s_time'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+            self.results['hbonds_%s_time'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=float)
             self.results['hbonds_%s_distribution'%shell] = 0.0*self.results['histogram_bins']
-            self.results['number_of_hbonds_%s'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=np.float)
+            self.results['number_of_hbonds_%s'%shell] =  np.zeros((len(self.configurationsIndexes)), dtype=float)
 
     def step(self, index):
         """

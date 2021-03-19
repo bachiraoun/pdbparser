@@ -159,13 +159,13 @@ class VASPFractionalCoordinates(Convert):
     def __get_fractional_coordinates__(self, lines, number):
         # pop first lines that should be Direct
         lines.pop(0)
-        fracCoord = np.empty((number,3)).astype(np.float)
+        fracCoord = np.empty((number,3)).astype(float)
         for idx in xrange(number):
             fracCoord[idx,:] = [ float(item) for item in lines.pop(0).split('\n')[0].split() ]
         return fracCoord
 
     def __calculate_real_coordinates__(self, fracCoord, xAxis, yAxis, zAxis):
-        realCoord = np.empty(fracCoord.shape).astype(np.float)
+        realCoord = np.empty(fracCoord.shape).astype(float)
         for idx in xrange(fracCoord.shape[0]):
             realCoord[idx,:] = xAxis*fracCoord[idx,0] + yAxis*fracCoord[idx,1] + zAxis*fracCoord[idx,2]
         return realCoord
@@ -359,7 +359,7 @@ class RMCplusplus(Convert):
         return np.array(coords)
 
     def __calculate_real_coordinates__(self, fracCoord):
-        realCoord = np.empty(fracCoord.shape).astype(np.float)
+        realCoord = np.empty(fracCoord.shape).astype(float)
         xAxis = self.info["vectors"][0,:]
         yAxis = self.info["vectors"][1,:]
         zAxis = self.info["vectors"][2,:]
