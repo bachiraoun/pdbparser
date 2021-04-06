@@ -862,7 +862,7 @@ class pdbparser(object):
             s = 200
             for i,c in enumerate('XYZ'):
                 for j in range(0, coordinates.shape[0], s):
-                    fd.write( 'REMARK    HR_%s --> '%c + ', '.join(['%.6f'%n for n in coordinates[j:j+s,i]]) )
+                    fd.write( 'REMARK    HR_%s --> '%c + ', '.join(['%.6f'%n for n in coordinates[j:j+s,i]])+'\n' )
         # write structure
         if structure:
             structure = STR('%s'%self.crystallographicStructure['record_name']).ljust(6, " ")[:6]  +\
