@@ -1412,7 +1412,8 @@ class pdbparser(object):
                    anisou = False,\
                    coordinates=None,
                    highResolutionCoords=False,
-                   boundaryConditions=None):
+                   boundaryConditions=None,
+                   _log=True):
         """
         Export the current pdb into .pdb file.\n
 
@@ -1450,7 +1451,8 @@ class pdbparser(object):
                                 anisou=anisou,
                                 coordinates=coordinates,
                                 highResolutionCoords=highResolutionCoords,
-                                boundaryConditions=boundaryConditions)
+                                boundaryConditions=boundaryConditions,
+                                _log=_log)
         else:
             # try to open file
             try:
@@ -1489,7 +1491,8 @@ class pdbparser(object):
                 pdbContent = fd.getvalue()
                 fileName = "'In-memory file'"
             fd.close()
-            Logger.info( "All records successfully exported to {fileName}".format(fileName=fileName))
+            if _log:
+                Logger.info( "All records successfully exported to {fileName}".format(fileName=fileName))
         # return pdb lines
         return pdbContent
 
@@ -1562,7 +1565,7 @@ class pdbparser(object):
         """alias method. by default this alias points to visualize_vmd"""
         self.visualize_vmd(*args, **kwargs)
 
-    def visualize_vmd(self, commands=None, indexes = None, coordinates = None, vmdAlias = None, startupScript=None):
+    def visualize_vmd(self, commands=None, indexes = None, coordinates = None, vmdAlias = None, startupScript=None, _log=False):
         """
         Visualize current pdb using VMD software.\n
 
@@ -1585,7 +1588,8 @@ class pdbparser(object):
                                   origxn = True ,\
                                   scalen = True ,\
                                   anisou = False,
-                                  coordinates=coordinates)
+                                  coordinates=coordinates,
+                                  _log=_log)
         # visualize
         if vmdAlias is None:
             vmdAlias = get_vmd_path()
@@ -1612,7 +1616,7 @@ class pdbparser(object):
             os.remove(filename)
 
 
-    def visualize_pymol(self, indexes=None, coordinates=None, pymolAlias=None):
+    def visualize_pymol(self, indexes=None, coordinates=None, pymolAlias=None, _log=False):
         """
         Visualize current pdb using pymol software.\n
 
@@ -1634,7 +1638,8 @@ class pdbparser(object):
                                   origxn = True ,\
                                   scalen = True ,\
                                   anisou = False,
-                                  coordinates=coordinates)
+                                  coordinates=coordinates,
+                                  _log=_log)
         if pymolAlias is None:
             pymolAlias = get_pymol_path()
         if pymolAlias is None:
@@ -2554,7 +2559,8 @@ class pdbTrajectory(object):
     def export_pdbs(self, outputPath = None,\
                           basename = "",\
                           configurationsIndexes = None,\
-                          atomsIndexes = None):
+                          atomsIndexes = None,
+                          _log=True):
         """
         Export trajectory configurations into seperate pdb files.\n
 
@@ -2631,4 +2637,5 @@ class pdbTrajectory(object):
                                 ter_format = False ,\
                                 origxn = False ,\
                                 scalen = False ,\
-                                anisou = False)
+                                anisou = False,
+                                _log=_log)
