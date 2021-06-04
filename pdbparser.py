@@ -1420,6 +1420,8 @@ class pdbparser(object):
         :Parameters:
             #. outputPath (None,string): the output pdb file path. If None
                pdb string format will be returned
+            #. indexes (None, list): list of atom indexes to export. If None,
+               all atoms will be exported
             #. additionalRemarks (string): add additional Remarks to the file.
             #. headings (boolean): export including the headings.
             #. structure (boolean): export including the structure.
@@ -1492,9 +1494,86 @@ class pdbparser(object):
                 fileName = "'In-memory file'"
             fd.close()
             if _log:
-                Logger.info( "All records successfully exported to {fileName}".format(fileName=fileName))
+                Logger.info( "All pdb records successfully exported to {fileName}".format(fileName=fileName))
         # return pdb lines
         return pdbContent
+
+    def export_xyz(self, outputPath ,\
+                   indexes = None,\
+                   coordinates=None,\
+                   boundaryConditions=None,
+                   _log=True):
+        """
+        Export the current pdb into .xyz file.\n
+
+        :Parameters:
+            #. outputPath (None,string): the output xyz file path. If None
+               xyz string format will be returned
+            #. indexes (None, list): list of atom indexes to export. If None,
+               all atoms will be exported
+            #. coordinates (None, np.ndarray): export pdb using different coordinates. If None, use pdb coordinates.
+            #. boundaryConditions (None, PeriodicBoundaries): Export boundary conditions other than pdbparser instance ones.
+
+        :Returns:
+            #. xyz (None, str): If outputPath is not None then None is returned
+               otherwise the xyz file as a string will be returned
+        """
+        if indexes is not None:
+            pdbCopy = copy.deepcopy(self)
+            pdbCopy.records = [self.records[idx] for idx in indexes]
+            pdbCopy.export_xyz( outputPath=outputPath, \
+                                indexes=None,\
+                                boundaryConditions=boundaryConditions,
+                                _log=_log)
+        else:
+            # try to open file
+            try:
+                if outputPath is not None:
+                    outputPath = _normalize_path(outputPath)
+                    fd = open(outputPath, 'w')
+                else:
+                    from io import StringIO
+                    fd = StringIO()
+            except:
+                raise Logger.error( "cannot open file %r for writing" %outputPath)
+            # check coordinates
+            if coordinates is not None:
+                assert isinstance(coordinates, np.ndarray), "coordinates must be numpy array instance"
+                assert coordinates.shape == (self.numberOfAtoms,3), "coordinates array shape must be (numberOfAtoms, 3)"
+                assert 'float' in coordinates.dtype.name, "coordinates data type must be a float"
+            else:
+                coordinates = self.coordinates
+            # write boundary conditions
+            bc=None
+            if boundaryConditions is None:
+                if hasattr(self, "_boundaryConditions"):
+                    if isinstance(self._boundaryConditions, PeriodicBoundaries):
+                        bc = self._boundaryConditions
+            elif isinstance(boundaryConditions, PeriodicBoundaries):
+                bc = boundaryConditions
+            else:
+                assert isinstance(boundaryConditions, InfiniteBoundaries),"boundaryConditions must be None or either InfiniteBoundaries and PeriodicBoundaries."
+            if bc is not None:
+                v = bc.get_vectors()
+                vectors = "%s  %s  %s  %s  %s  %s  %s  %s  %s"%(STR(v[0,0]),STR(v[0,1]),STR(v[0,2]),STR(v[1,0]),STR(v[1,1]),STR(v[1,2]),STR(v[2,0]),STR(v[2,1]),STR(v[2,2]))
+                fd.write("# Boundary Conditions: %s \n" %vectors)
+            # write trajectory file
+            elements = [STR(el).strip().rjust(5) for el in self.elements]
+            fd.write("%s\n"%len(elements))
+            fd.write("%s\n"%self.__name)
+            for el, (x,y,z) in zip(elements, coordinates):
+                fd.write( "{el}{x:10.5f}{y:10.5f}{z:10.5f}\n".format(el=el,x=x,y=y,z=z) )
+            # close file
+            zyxContent = None
+            fileName   = outputPath
+            if outputPath is None:
+                zyxContent = fd.getvalue()
+                fileName = "'In-memory file'"
+            fd.close()
+            if _log:
+                Logger.info( "All xyz records successfully exported to {fileName}".format(fileName=fileName))
+        # return pdb lines
+        return zyxContent
 
     def concatenate(self, pdb, boundaryConditions=None):
         """
