@@ -95,6 +95,8 @@ class pdbparser(object):
     :Parameters:
         #. filePath (None, string, list): the input pdb file path or list of
            pdb lines
+        #. name (None, string): pdb name. If None it will be automatically set
+           to filePath if given.
     """
     __RECORD_NAMES__ = { "CRYST1" : "__read_CRYST1__", \
                          "ORIGX1" : "__read_ORIGXn__", \
@@ -114,11 +116,14 @@ class pdbparser(object):
                          "END"    : "__read_END__" ,\
                         }
 
-    def __init__(self, filePath = None):
+    def __init__(self, filePath=None, name=None):
         # initialize all attributes
         self.__reset__()
         # load pdb
         self.read_pdb(filePath)
+        # set name
+        if name is not None:
+            self.set_name(name)
 
     def _codify__(self, name='pdb', addDependencies=False, splitRecords=10):
         assert isinstance(splitRecords, int), Logger.error("splitRecords must be an integer")
