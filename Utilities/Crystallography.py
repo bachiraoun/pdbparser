@@ -211,22 +211,24 @@ class CrystalMaker(object):
 
         # read cif file lines
         attributes, loops = parse_file(path)
+        from pprint import pprint
+        pprint(attributes)
         # search for a,b,c,alpha,beta,gamma
         A = B = C = ALPHA = BETA = GAMMA = None
         lines = []
         for l in attributes:
             if l.startswith('_cell_length_a'):
-                A = float(l.strip('_cell_length_a').split('(')[0])
+                A = float(l[len('_cell_length_a'):].split('(')[0])
             elif l.startswith('_cell_length_b'):
-                B = float(l.strip('_cell_length_b').split('(')[0])
+                B = float(l[len('_cell_length_b'):].split('(')[0])
             elif l.startswith('_cell_length_c'):
-                C = float(l.strip('_cell_length_c').split('(')[0])
+                C = float(l[len('_cell_length_c'):].split('(')[0])
             elif l.startswith('_cell_angle_alpha'):
-                ALPHA = float(l.strip('_cell_angle_alpha').split('(')[0])
+                ALPHA = float(l[len('_cell_angle_alpha'):].split('(')[0])
             elif l.startswith('_cell_angle_beta'):
-                BETA = float(l.strip('_cell_angle_beta').split('(')[0])
+                BETA = float(l[len('_cell_angle_beta'):].split('(')[0])
             elif l.startswith('_cell_angle_gamma'):
-                GAMMA = float(l.strip('_cell_angle_gamma').split('(')[0])
+                GAMMA = float(l[len('_cell_angle_gamma'):].split('(')[0])
         assert A is not None, "'_cell_length_a' not found in cif file"
         assert B is not None, "'_cell_length_b' not found in cif file"
         assert C is not None, "'_cell_length_c' not found in cif file"
@@ -269,12 +271,13 @@ class CrystalMaker(object):
                     break
         if symOps is None:
             for a in attributes:
-                if '_space_group_name_H-M_alt' in a:
-                    symOps = a.strip('_space_group_name_H-M_alt').strip().strip("'").strip('"')
+                if 'space_group_name_H-M' in a:
+                    symOps = a.split(' ')[-1].strip().strip("'").strip('"')
                     symOps = symOps.replace(' ','')
                     assert symOps in HM_TO_HALL, "Unable to map Hermann-Mauguin symbol to Hall symbol"
                     symOps = HM_TO_HALL[symOps]
                     symOps = HALL_TO_SYM_OPS[symOps]
+                    break
         assert symOps is not None, "space group symmetry not found"
         # instanciate builder
         builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA])
