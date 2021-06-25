@@ -1446,7 +1446,7 @@ class pdbparser(object):
         if indexes is not None:
             pdbCopy = copy.deepcopy(self)
             pdbCopy.records = [self.records[idx] for idx in indexes]
-            pdbCopy.export_pdb( outputPath=outputPath, \
+            return pdbCopy.export_pdb( outputPath=outputPath, \
                                 indexes=None,\
                                 additionalRemarks=additionalRemarks,\
                                 headings=headings,\
@@ -1569,16 +1569,122 @@ class pdbparser(object):
             for el, (x,y,z) in zip(elements, coordinates):
                 fd.write( "{el}{x:10.5f}{y:10.5f}{z:10.5f}\n".format(el=el,x=x,y=y,z=z) )
             # close file
-            zyxContent = None
+            xyzContent = None
             fileName   = outputPath
             if outputPath is None:
-                zyxContent = fd.getvalue()
+                xyzContent = fd.getvalue()
                 fileName = "'In-memory file'"
             fd.close()
             if _log:
                 Logger.info( "All xyz records successfully exported to {fileName}".format(fileName=fileName))
-        # return pdb lines
-        return zyxContent
+        # return xyz lines
+        return xyzContent
+
+    def export_cif(self, outputPath ,\
+                   indexes = None,\
+                   coordinates=None,\
+                   boundaryConditions=None,
+                   _log=True):
+        """
+        Export the current pdb into .cif file.\n
+
+        :Parameters:
+            #. outputPath (None,string): the output cif file path. If None
+               cif string format will be returned
+            #. indexes (None, list): list of atom indexes to export. If None,
+               all atoms will be exported
+            #. coordinates (None, np.ndarray): export pdb using different coordinates. If None, use pdb coordinates.
+            #. boundaryConditions (None, PeriodicBoundaries): Export boundary conditions other than pdbparser instance ones.
+
+        :Returns:
+            #. cif (None, str): If outputPath is not None then None is returned
+               otherwise the cif file as a string will be returned
+        """
+        if indexes is not None:
+            pdbCopy = copy.deepcopy(self)
+            pdbCopy.records = [self.records[idx] for idx in indexes]
+            pdbCopy.export_cif( outputPath=outputPath, \
+                                indexes=None,\
+                                boundaryConditions=boundaryConditions,
+                                _log=_log)
+        else:
+            # try to open file
+            try:
+                if outputPath is not None:
+                    outputPath = _normalize_path(outputPath)
+                    fd = open(outputPath, 'w')
+                else:
+                    from io import StringIO
+                    fd = StringIO()
+            except:
+                raise Logger.error( "cannot open file %r for writing" %outputPath)
+            # check coordinates
+            if coordinates is not None:
+                assert isinstance(coordinates, np.ndarray), "coordinates must be numpy array instance"
+                assert coordinates.shape == (self.numberOfAtoms,3), "coordinates array shape must be (numberOfAtoms, 3)"
+                assert 'float' in coordinates.dtype.name, "coordinates data type must be a float"
+            else:
+                coordinates = self.coordinates
+            # write boundary conditions
+            bc=None
+            if boundaryConditions is None:
+                if hasattr(self, "_boundaryConditions"):
+                    bc = self._boundaryConditions
+            assert isinstance(bc, PeriodicBoundaries),"boundaryConditions must be None or either InfiniteBoundaries and PeriodicBoundaries."
+            # get boundary conditions
+            a      = bc.get_a()
+            b      = bc.get_b()
+            c      = bc.get_c()
+            alpha  = bc.get_alpha()*180/np.pi
+            beta   = bc.get_beta()*180/np.pi
+            gamma  = bc.get_gamma()*180/np.pi
+            coords = bc.real_to_box_array(self.coordinates)
+            # start creating cif file
+            header = """Comment:  this file is generated using pdbparser package
+
+_cell_length_a                  {a:.4f}(0)
+_cell_length_b                  {b:.4f}(0)
+_cell_length_c                  {c:.4f}(0)
+_cell_angle_alpha               {alpha:.4f}(0)
+_cell_angle_beta                {beta:.4f}(0)
+_cell_angle_gamma               {gamma:.4f}(0)
+
+_symmetry_space_group_name_H-M     'P 1'
+_symmetry_Int_Tables_number         1
+
+loop_
+_symmetry_equiv_pos_as_xyz
+'x,y,z'
+
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_occupancy
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma)
+            fd.write(header)
+            # add atoms
+            for idx, rec in enumerate(self.records):
+                at = "\n{name} {element} 1.0000     {x:.5f}     {y:.5f}     {z:.5f}".\
+                format(name=rec['atom_name'].rjust(6),
+                       element=rec['element_symbol'].rjust(6),
+                       x = coords[idx,0],
+                       y = coords[idx,1],
+                       z = coords[idx,2])
+                fd.write(at)
+            # close file
+            cifContent = None
+            fileName   = outputPath
+            if outputPath is None:
+                cifContent = fd.getvalue()
+                fileName = "'In-memory file'"
+            fd.close()
+            if _log:
+                Logger.info( "All xyz records successfully exported to {fileName}".format(fileName=fileName))
+        # return cif lines
+        return cifContent
+
 
     def concatenate(self, pdb, boundaryConditions=None):
         """

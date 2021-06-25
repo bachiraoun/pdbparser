@@ -205,7 +205,7 @@ class InfiniteBoundaries(object):
         """
         return realArray
 
-    def get_contiguous_box_array(self, boxArray):
+    def get_contiguous_box_array(self, boxArray, ref=0):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
@@ -593,19 +593,20 @@ class PeriodicBoundaries(InfiniteBoundaries):
         boxArray = self.real_to_box_array(realArray, index)
         return self.box_to_real_array( self.fold_box_array(boxArray), index )
 
-    def get_contiguous_box_array(self, boxArray):
+    def get_contiguous_box_array(self, boxArray, ref=0):
         """
         transform box array into a contiguous array where no box distance is
         bigger than 0.5.
 
         :Parameters:
             #. realArray (numpy.ndarray): the real space coordinates.
+            #. ref (integer): reference atom index
 
         :Returns:
             #. foldedArray (numpy.ndarray): the folded into real coordinates box array.
         """
         # incrementally construct cluster starting from first point
-        diff = boxArray-boxArray[0,:]
+        diff = boxArray-boxArray[ref,:]
         # remove multiple box distances
         intDiff = diff.astype(int)
         barray  = boxArray-intDiff
@@ -613,19 +614,20 @@ class PeriodicBoundaries(InfiniteBoundaries):
         # remove half box distances
         return np.where(np.abs(diff)<0.5, barray, barray-np.sign(diff))
 
-    def get_contiguous_real_array(self, realArray, index = -1):
+    def get_contiguous_real_array(self, realArray, ref=0, index = -1):
         """
         transform real array into a contiguous array where no distance is
         bigger than half boundary conditions size
 
         :Parameters:
             #. realArray (numpy.ndarray): the real space coordinates.
+            #. ref (integer): reference atom index
 
         :Returns:
             #. foldedArray (numpy.ndarray): the folded into real coordinates box array.
         """
         boxArray = self.real_to_box_array(realArray, index)
-        return self.box_to_real_array( self.get_contiguous_box_array(boxArray), index )
+        return self.box_to_real_array( self.get_contiguous_box_array(boxArray, ref=ref), index )
 
     def box_difference(self, boxVector, boxArray):
         """

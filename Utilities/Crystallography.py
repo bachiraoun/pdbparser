@@ -211,8 +211,6 @@ class CrystalMaker(object):
 
         # read cif file lines
         attributes, loops = parse_file(path)
-        from pprint import pprint
-        pprint(attributes)
         # search for a,b,c,alpha,beta,gamma
         A = B = C = ALPHA = BETA = GAMMA = None
         lines = []
@@ -692,11 +690,29 @@ class CrystalMaker(object):
             translations = self.__translations
         return [[(x+t[0])%sx, (y+t[1])%sy, (z+t[2])%sz ] for t in translations]
 
-    def get_supercell_real_coordinates(self):
+    def get_supercell_real_coordinates(self, fold=True):
         """compute and return supercell real atomic coordinates
+
+        :Parameters:
+            #. fold (boolean): whether to fold into supercell box
 
         :Returns:
             #. realCoordinates (numpy.ndarray): the supercell atomic coordinates
+               array
+        """
+        # fold box coordinates into box
+        boxCoords = self.get_supercell_box_coordinates(fold=fold)
+        # get real coordinates
+        return self.__supercellBC.box_to_real_array(boxCoords)
+
+    def get_supercell_box_coordinates(self, fold=True):
+        """compute and return supercell box atomic coordinates
+
+        :Parameters:
+            #. fold (boolean): whether to fold into supercell box
+
+        :Returns:
+            #. boxCoordinates (numpy.ndarray): the supercell atomic coordinates
                array
         """
         assert self.__supercell is not None, "supercell is not defined"
@@ -705,10 +721,9 @@ class CrystalMaker(object):
         boxCoords[:,0] /= float(self.__supercell[0])
         boxCoords[:,1] /= float(self.__supercell[1])
         boxCoords[:,2] /= float(self.__supercell[2])
-        # fold box coordinates into box
-        boxCoords = self.__supercellBC.fold_box_array(boxCoords)
-        # get real coordinates
-        return self.__supercellBC.box_to_real_array(boxCoords)
+        if fold:
+            boxCoords = self.__supercellBC.fold_box_array(boxCoords)
+        return boxCoords
 
     def get_pdb(self):
         """get a pdbparser instance of the create supercell
