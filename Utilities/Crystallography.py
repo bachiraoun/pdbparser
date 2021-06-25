@@ -125,6 +125,7 @@ class CrystalMaker(object):
             pdb = maker.get_pdb()
 
         """
+        ### CHECK CIF DATA ITEMS FROM https://journals.iucr.org/services/cif/reqditems.html
         def split_loop_line(line, n):
             splitted = []
             s  = None
@@ -239,22 +240,22 @@ class CrystalMaker(object):
             if '_atom_site_fract_x' in block and \
                '_atom_site_fract_y' in block and \
                '_atom_site_fract_z' in block:
-               if '_atom_site_type_symbol' in block:
-                   s  = block['_atom_site_type_symbol']
-               else:
-                   assert '_atom_site_label' in block, "neither '_atom_site_label' nor '_atom_site_type_symbol' are found in _atom_site loop"
-                   s  = block['_atom_site_label']
-               x  = block['_atom_site_fract_x']
-               y  = block['_atom_site_fract_y']
-               z  = block['_atom_site_fract_z']
-               o = block.get('_atom_site_occupancy', ['1']*len(s))
-               for i,e in enumerate(s):
-                   e = ''.join([i for i in e if i.isalpha() or i==' '])
-                   atoms.append((e,float(x[i].split('(')[0]),
-                                   float(y[i].split('(')[0]),
-                                   float(z[i].split('(')[0]),
-                                   float(o[i].split('(')[0])))
-               break
+                assert '_atom_site_type_symbol' in block or '_atom_site_label' in block, "neither '_atom_site_label' nor '_atom_site_type_symbol' are found in _atom_site loop"
+                l  = block.get('_atom_site_label', None)
+                s  = block.get('_atom_site_type_symbol', l)
+                x  = block['_atom_site_fract_x']
+                y  = block['_atom_site_fract_y']
+                z  = block['_atom_site_fract_z']
+                o = block.get('_atom_site_occupancy', ['1']*len(s))
+                if l is None:
+                    l = [None for _ in s]
+                for i,e in enumerate(s):
+                    e = ''.join([i for i in e if i.isalpha() or i==' '])
+                    atoms.append((e,l[i], float(x[i].split('(')[0]),
+                                          float(y[i].split('(')[0]),
+                                          float(z[i].split('(')[0]),
+                                          float(o[i].split('(')[0])))
+                break
         assert len(atoms), "atom_site loop not found"
         # get symmetry operations
         symOps = None
@@ -269,7 +270,7 @@ class CrystalMaker(object):
                     break
         if symOps is None:
             for a in attributes:
-                if 'space_group_name_H-M' in a:
+                if '_space_group_name_H-M' in a:
                     symOps = a.split(' ')[-1].strip().strip("'").strip('"')
                     symOps = symOps.replace(' ','')
                     assert symOps in HM_TO_HALL, "Unable to map Hermann-Mauguin symbol to Hall symbol"
@@ -379,19 +380,20 @@ class CrystalMaker(object):
         newAtoms = []
         for idx, item in enumerate(atoms):
             assert isinstance(item, (list,tuple)), "atoms item must be a tuple. Item index %i is not"%idx
-            assert 4<=len(item)<=5, "atoms item tuple must have 4 or 5 items. Item index %i is not"%idx
+            assert 5<=len(item)<=6, "atoms item tuple must have 5 or 6 items. Item index %i is not"%idx
             assert isinstance(item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not"%idx
             assert 1<=len(item[0])<=2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not"%idx
             assert is_element(item[0]), "Given atom element '%s' is not found in database"%(item[0],)
             assert not item[0].startswith("$"), "atoms item tuple first item (element) string must not start with '$'. Item index %i is not"%idx
-            assert isinstance(item[1], (int,float)), "atoms item tuple second item (x) must be a number. Item index %i is not"%idx
-            assert isinstance(item[2], (int,float)), "atoms item tuple third item (y) must be a number. Item index %i is not"%idx
-            assert isinstance(item[3], (int,float)), "atoms item tuple fourth item (z) must be a number. Item index %i is not"%idx
+            assert item[1] is None or isinstance(item[1], str), "atoms item tuple second item (name) must be None or a string. Item index %i is not"%idx
+            assert isinstance(item[2], (int,float)), "atoms item tuple third item (x) must be a number. Item index %i is not"%idx
+            assert isinstance(item[3], (int,float)), "atoms item tuple fourth item (y) must be a number. Item index %i is not"%idx
+            assert isinstance(item[4], (int,float)), "atoms item tuple fifth item (z) must be a number. Item index %i is not"%idx
             if len(item)==4:
                 item = list(item)
                 item.append(1)
-            assert isinstance(item[4], (int,float)), "atoms item tuple fifth item (occupancy) if given must be a number. Item index %i is not"%idx
-            assert 0<=item[4]<=1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not"%idx
+            assert isinstance(item[5], (int,float)), "atoms item tuple sixth item (occupancy) if given must be a number. Item index %i is not"%idx
+            assert 0<=item[5]<=1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not"%idx
             newAtoms.append(tuple(item))
         return newAtoms
 
@@ -400,7 +402,7 @@ class CrystalMaker(object):
         posLUT   = OrderedDict()
         namesLUT = {}
         nlut     = {}
-        for aIdx, (el,x,y,z,o) in enumerate(self.__atoms ):
+        for aIdx, (el,nm,x,y,z,o) in enumerate(self.__atoms ):
             pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[1].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
@@ -408,7 +410,8 @@ class CrystalMaker(object):
             for p in pos:
                 nlut.setdefault(el,0)
                 nlut[el] += 1
-                nm = "%s%i"%(el,nlut[el])
+                if nm is None:
+                    nm = "%s%i"%(el,nlut[el])
                 namesLUT[nm] = len(namesLUT)+1
                 posLUT.setdefault(p,[]).append((el,nm,o))
         ## build atomic sites lut

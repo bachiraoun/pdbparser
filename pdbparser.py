@@ -1649,8 +1649,7 @@ _cell_angle_alpha               {alpha:.4f}(0)
 _cell_angle_beta                {beta:.4f}(0)
 _cell_angle_gamma               {gamma:.4f}(0)
 
-_symmetry_space_group_name_H-M     'P 1'
-_symmetry_Int_Tables_number         1
+_space_group_name_H-M_alt       'P 1'
 
 loop_
 _symmetry_equiv_pos_as_xyz
