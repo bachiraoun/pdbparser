@@ -1640,7 +1640,7 @@ class pdbparser(object):
             gamma  = bc.get_gamma()*180/np.pi
             coords = bc.real_to_box_array(self.coordinates)
             # start creating cif file
-            header = """Comment:  this file is generated using pdbparser package
+            header = """# This file is generated using pdbparser package
 
 _cell_length_a                  {a:.4f}(0)
 _cell_length_b                  {b:.4f}(0)
