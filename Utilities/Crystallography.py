@@ -65,7 +65,7 @@ class CrystalMaker(object):
         pdb = maker.get_pdb()
 
     """
-    def __init__(self, symOps, atoms, unitcellBC):
+    def __init__(self, symOps, atoms, unitcellBC, _precision=None):
         self.__translations = (( 1, -1, -1), ( 1, -1, 0), ( 1, -1, 1),
                                ( 1,  0, -1), ( 1,  0, 0), ( 1,  0, 1),
                                ##
@@ -80,7 +80,7 @@ class CrystalMaker(object):
                               )
         self.__symOps = self.__get_symmetry_operations(symOps)
         self.__atoms  = self.__get_atoms_definition(atoms)
-        self.__build_unit_cell()
+        self.__build_unit_cell(_precision=_precision)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
 
     def __len__(self):
@@ -236,6 +236,7 @@ class CrystalMaker(object):
         assert GAMMA is not None, "'_cell_angle_gamma' not found in cif file"
         # get atoms
         atoms = []
+        _precision  = {}
         for block in loops:
             if '_atom_site_fract_x' in block and \
                '_atom_site_fract_y' in block and \
@@ -251,12 +252,24 @@ class CrystalMaker(object):
                     l = [None for _ in s]
                 for i,e in enumerate(s):
                     e = ''.join([i for i in e if i.isalpha() or i==' '])
-                    atoms.append((e,l[i], float(x[i].split('(')[0]),
-                                          float(y[i].split('(')[0]),
-                                          float(z[i].split('(')[0]),
+                    xi = x[i].split('(')[0]
+                    yi = y[i].split('(')[0]
+                    zi = z[i].split('(')[0]
+                    _precision[len((xi.split('.')[-1]))] = True
+                    _precision[len((yi.split('.')[-1]))] = True
+                    _precision[len((zi.split('.')[-1]))] = True
+                    atoms.append((e,l[i], float(xi),
+                                          float(yi),
+                                          float(zi),
                                           float(o[i].split('(')[0])))
                 break
         assert len(atoms), "atom_site loop not found"
+        if len(_precision):
+            _precision = min(list(_precision))-1
+            if _precision<=2:
+                _precision = None
+        else:
+            _precision = None
         # get symmetry operations
         symOps = None
         for block in loops:
@@ -279,7 +292,7 @@ class CrystalMaker(object):
                     break
         assert symOps is not None, "space group symmetry not found"
         # instanciate builder
-        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA])
+        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA], _precision=_precision)
         # return
         return builder
 
@@ -397,7 +410,7 @@ class CrystalMaker(object):
             newAtoms.append(tuple(item))
         return newAtoms
 
-    def __build_unit_cell(self):
+    def __build_unit_cell(self, _precision=None):
         ## build atoms name lut and ordered position lut
         posLUT   = OrderedDict()
         namesLUT = {}
@@ -406,7 +419,11 @@ class CrystalMaker(object):
             pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[1].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
-            pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
+            #pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
+            if _precision is not None:
+                pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
+            else:
+                pos = sorted(set([tuple([eval(i)%1 for i in s]) for s in pos]))
             for p in pos:
                 nlut.setdefault(el,0)
                 nlut[el] += 1

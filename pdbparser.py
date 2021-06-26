@@ -1584,6 +1584,7 @@ class pdbparser(object):
                    indexes = None,\
                    coordinates=None,\
                    boundaryConditions=None,
+                   _precision=6,
                    _log=True):
         """
         Export the current pdb into .cif file.\n
@@ -1664,13 +1665,13 @@ _atom_site_fract_y
 _atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma)
             fd.write(header)
             # add atoms
+            atLine = "\n{name} {element} 1.0000     {x:.%sf}     {y:.%sf}     {z:.%sf}"%(_precision,_precision,_precision)
             for idx, rec in enumerate(self.records):
-                at = "\n{name} {element} 1.0000     {x:.5f}     {y:.5f}     {z:.5f}".\
-                format(name=rec['atom_name'].rjust(6),
-                       element=rec['element_symbol'].rjust(6),
-                       x = coords[idx,0],
-                       y = coords[idx,1],
-                       z = coords[idx,2])
+                at = atLine.format(name=rec['atom_name'].rjust(6),
+                                   element=rec['element_symbol'].rjust(6),
+                                   x = coords[idx,0],
+                                   y = coords[idx,1],
+                                   z = coords[idx,2])
                 fd.write(at)
             # close file
             cifContent = None
