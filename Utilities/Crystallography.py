@@ -161,6 +161,8 @@ class CrystalMaker(object):
                 with open(path, 'r') as fd:
                     cifLines = [l.strip() for l in fd.readlines()]
                 #cifLines = [l for l in cifLines if not l.startswith('#') and len(l)]
+            for l in cifLines:
+                print(l)
             attributes = []
             loopBlocks = []
             loopData   = []
@@ -421,7 +423,7 @@ class CrystalMaker(object):
                     i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
             #pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
             if _precision is not None:
-                pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
+                pos = sorted(set([tuple([round(eval(i)%1,_precision) for i in s]) for s in pos]))
             else:
                 pos = sorted(set([tuple([eval(i)%1 for i in s]) for s in pos]))
             for p in pos:
