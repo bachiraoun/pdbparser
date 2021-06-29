@@ -90,7 +90,7 @@ class CrystalMaker(object):
             return len(self.__supercellElements)
 
     @classmethod
-    def from_cif(cls, path):
+    def from_cif(cls, path, resetNames=False):
         """Read cif file and instanciate a CrystalMaker instance.
         A valid cif file must contain all of the following
 
@@ -111,6 +111,8 @@ class CrystalMaker(object):
         :Parameters:
             #. path (string, list, tuple): cif file path or a list of cif file
                lines
+            #. resetNames (boolean): whether to reset atom names and make them
+               unique in the unitcell
 
         :Returns:
             #. maker (CrystalMaker): CrystalMaker instance
@@ -125,6 +127,7 @@ class CrystalMaker(object):
             pdb = maker.get_pdb()
 
         """
+        assert isinstance(resetNames, bool), "resetNames must be boolean"s
         ### CHECK CIF DATA ITEMS FROM https://journals.iucr.org/services/cif/reqditems.html
         def split_loop_line(line, n):
             splitted = []
@@ -161,8 +164,6 @@ class CrystalMaker(object):
                 with open(path, 'r') as fd:
                     cifLines = [l.strip() for l in fd.readlines()]
                 #cifLines = [l for l in cifLines if not l.startswith('#') and len(l)]
-            for l in cifLines:
-                print(l)
             attributes = []
             loopBlocks = []
             loopData   = []
@@ -244,7 +245,7 @@ class CrystalMaker(object):
                '_atom_site_fract_y' in block and \
                '_atom_site_fract_z' in block:
                 assert '_atom_site_type_symbol' in block or '_atom_site_label' in block, "neither '_atom_site_label' nor '_atom_site_type_symbol' are found in _atom_site loop"
-                l  = block.get('_atom_site_label', None)
+                l  = None if resetNames else block.get('_atom_site_label', None)
                 s  = block.get('_atom_site_type_symbol', l)
                 x  = block['_atom_site_fract_x']
                 y  = block['_atom_site_fract_y']
