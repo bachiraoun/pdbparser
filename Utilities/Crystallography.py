@@ -127,7 +127,7 @@ class CrystalMaker(object):
             pdb = maker.get_pdb()
 
         """
-        assert isinstance(resetNames, bool), "resetNames must be boolean"s
+        assert isinstance(resetNames, bool), "resetNames must be boolean"
         ### CHECK CIF DATA ITEMS FROM https://journals.iucr.org/services/cif/reqditems.html
         def split_loop_line(line, n):
             splitted = []
