@@ -4,7 +4,7 @@ import os
 
 # simplelog imports
 from pysimplelog import Logger as LOG
- 
+
 
 # Create LOGGER
 class pdbparserLogger(LOG):
