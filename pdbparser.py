@@ -10,7 +10,7 @@ It contains the pdbparser class definition as well as pdbTrajectory.
 
 # standard libraries imports
 from __future__ import print_function
-import sys, copy, itertools, tempfile, os, shutil, re
+import sys, copy, itertools, tempfile, os, shutil, re, collections
 try:
     import cPickle as pickle
 except:
@@ -1206,6 +1206,55 @@ class pdbparser(object):
             coords[groupIndexes,:] = groupCoords
         # convert box to real coordinates and return
         return self._boundaryConditions.box_to_real_array(boxArray=coords)
+
+    def merge_records(self, resolution, indexes=None, getCopy=True):
+        """Get pdb records merged given a resolution parameter or a list
+
+        :Parameters:
+            #. resolution (number, list): resolition along x,y and z
+            #. indexes (list, tuple, None): The pdb records indexes to consider. None returns all indexes.
+
+        :Returns:
+            #. pdb (pdbparser): The merged pdb instance.
+        """
+        assert isinstance(getCopy, bool), Logger.error("getCopy must be boolean")
+        if not isinstance(resolution, (list,tuple)):
+            resolution = [resolution,resolution,resolution]
+        assert len(resolution)==3, Logger.error("merging resolution list must have 3 items")
+        assert all([is_number(i) for i in resolution]), Logger.error("merging resolution list items must be numbers")
+        resolution = [float(i) for i in resolution]
+        assert all([i>0 for i in resolution]), Logger.error("merging resolution list items must be >0")
+        # get pdb
+        if getCopy:
+            pdb = get_copy(indexes=indexes)
+        else:
+            pdb = self
+            if indexes is not None:
+                pdb.records = [pdb.records[i] for i in indexes]
+        # merge pdb
+        structure = collections.OrderedDict()
+        for rec in pdb.records:
+            x  = rec['coordinates_x']
+            y  = rec['coordinates_y']
+            z  = rec['coordinates_z']
+            e = rec['element_symbol']
+            n = rec['atom_name']
+            k = (round(x/resolution[0]),round(y/resolution[1]),round(z/resolution[2]),e,n)
+            s = structure.setdefault(k,{'x':[],'y':[],'z':[], 'rec':rec})
+            s['x'].append(x)
+            s['y'].append(y)
+            s['z'].append(z)
+        records = []
+        for k in structure:
+            s   = structure[k]
+            rec = s['rec']
+            rec['coordinates_x'] = np.mean(s['x'])
+            rec['coordinates_y'] = np.mean(s['y'])
+            rec['coordinates_z'] = np.mean(s['z'])
+            records.append(rec)
+        pdb.records = records
+        # return
+        return pdb
 
 
     def get_atom_trajectory(self, index, configurationsIndexes=None):
