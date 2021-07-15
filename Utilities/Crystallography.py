@@ -246,7 +246,7 @@ class CrystalMaker(object):
                '_atom_site_fract_z' in block:
                 assert '_atom_site_type_symbol' in block or '_atom_site_label' in block, "neither '_atom_site_label' nor '_atom_site_type_symbol' are found in _atom_site loop"
                 l  = None if resetNames else block.get('_atom_site_label', None)
-                s  = block.get('_atom_site_type_symbol', l)
+                s  = block.get('_atom_site_type_symbol', block['_atom_site_label'])
                 x  = block['_atom_site_fract_x']
                 y  = block['_atom_site_fract_y']
                 z  = block['_atom_site_fract_z']
