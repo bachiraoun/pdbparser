@@ -65,7 +65,7 @@ class CrystalMaker(object):
         pdb = maker.get_pdb()
 
     """
-    def __init__(self, symOps, atoms, unitcellBC, _precision=None):
+    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _uniqueNames=False):
         self.__translations = (( 1, -1, -1), ( 1, -1, 0), ( 1, -1, 1),
                                ( 1,  0, -1), ( 1,  0, 0), ( 1,  0, 1),
                                ##
@@ -80,7 +80,7 @@ class CrystalMaker(object):
                               )
         self.__symOps = self.__get_symmetry_operations(symOps)
         self.__atoms  = self.__get_atoms_definition(atoms)
-        self.__build_unit_cell(_precision=_precision)
+        self.__build_unit_cell(_precision=_precision, _uniqueNames=_uniqueNames)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
 
     def __len__(self):
@@ -90,7 +90,7 @@ class CrystalMaker(object):
             return len(self.__supercellElements)
 
     @classmethod
-    def from_cif(cls, path, resetNames=False):
+    def from_cif(cls, path, _uniqueNames=False, _uniqueNames=False):
         """Read cif file and instanciate a CrystalMaker instance.
         A valid cif file must contain all of the following
 
@@ -295,7 +295,7 @@ class CrystalMaker(object):
                     break
         assert symOps is not None, "space group symmetry not found"
         # instanciate builder
-        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA], _precision=_precision)
+        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA], _precision=_precision, _uniqueNames=_uniqueNames)
         # return
         return builder
 
@@ -415,7 +415,7 @@ class CrystalMaker(object):
             newAtoms.append(tuple(item))
         return newAtoms
 
-    def __build_unit_cell(self, _precision=None):
+    def __build_unit_cell(self, _precision=None, _uniqueNames=False):
         ## build atoms name lut and ordered position lut
         posLUT   = OrderedDict()
         namesLUT = {}
@@ -433,8 +433,10 @@ class CrystalMaker(object):
                 nlut.setdefault(el,0)
                 nlut[el] += 1
                 atnm = nm
-                if atnm is None:
-                    atnm = "%s%i"%(el,nlut[el])
+                elnm = nlut[el]
+                while (atnm is None) or (_uniqueNames and atnm in namesLUT):
+                    atnm  = "%s%i"%(el,elnm)
+                    elnm += 1
                 namesLUT[atnm] = len(namesLUT)+1
                 posLUT.setdefault(p,[]).append((el,atnm,o))
         ## build atomic sites lut
