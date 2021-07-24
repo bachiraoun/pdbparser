@@ -90,7 +90,7 @@ class CrystalMaker(object):
             return len(self.__supercellElements)
 
     @classmethod
-    def from_cif(cls, path, _uniqueNames=False, _uniqueNames=False):
+    def from_cif(cls, path, resetNames=False, _uniqueNames=False):
         """Read cif file and instanciate a CrystalMaker instance.
         A valid cif file must contain all of the following
 
