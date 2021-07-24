@@ -434,7 +434,7 @@ class CrystalMaker(object):
                 nlut[el] += 1
                 atnm = nm
                 elnm = nlut[el]
-                while (atnm is None) or (_uniqueNames and atnm in namesLUT):
+                while (atnm is None) or (_uniqueNames and atnm in namesLUT) or (_uniqueNames and atnm==el):
                     atnm  = "%s%i"%(el,elnm)
                     elnm += 1
                 namesLUT[atnm] = len(namesLUT)+1
