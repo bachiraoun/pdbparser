@@ -396,7 +396,9 @@ class CrystalMaker(object):
         newAtoms = []
         for idx, item in enumerate(atoms):
             assert isinstance(item, (list,tuple)), "atoms item must be a tuple. Item index %i is not"%idx
-            assert 5<=len(item)<=6, "atoms item tuple must have 5 or 6 items. Item index %i is not"%idx
+            if len(item) == 5:
+                item = [item[0],None,item[1],item[2],item[3],item[4]]
+            assert len(item)==6, "atoms item tuple must have 5 or 6 items. Item index %i is not"%idx
             assert isinstance(item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not"%idx
             assert 1<=len(item[0])<=2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not"%idx
             assert is_element(item[0]), "Given atom element '%s' is not found in database"%(item[0],)
@@ -418,7 +420,7 @@ class CrystalMaker(object):
         posLUT   = OrderedDict()
         namesLUT = {}
         nlut     = {}
-        for aIdx, (el,nm,x,y,z,o) in enumerate(self.__atoms ):
+        for aIdx, (el,nm,x,y,z,o) in enumerate(self.__atoms):
             pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[1].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
@@ -430,10 +432,11 @@ class CrystalMaker(object):
             for p in pos:
                 nlut.setdefault(el,0)
                 nlut[el] += 1
-                if nm is None:
-                    nm = "%s%i"%(el,nlut[el])
-                namesLUT[nm] = len(namesLUT)+1
-                posLUT.setdefault(p,[]).append((el,nm,o))
+                atnm = nm
+                if atnm is None:
+                    atnm = "%s%i"%(el,nlut[el])
+                namesLUT[atnm] = len(namesLUT)+1
+                posLUT.setdefault(p,[]).append((el,atnm,o))
         ## build atomic sites lut
         sitesLUT = {}
         for pos in posLUT:
