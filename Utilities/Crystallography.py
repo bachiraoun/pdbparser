@@ -66,6 +66,7 @@ class CrystalMaker(object):
 
     """
     def __init__(self, symOps, atoms, unitcellBC, _precision=None, _uniqueNames=False):
+        self.__unitcellBC   = self.__supercellBC = None
         self.__translations = (( 1, -1, -1), ( 1, -1, 0), ( 1, -1, 1),
                                ( 1,  0, -1), ( 1,  0, 0), ( 1,  0, 1),
                                ##
@@ -80,8 +81,8 @@ class CrystalMaker(object):
                               )
         self.__symOps = self.__get_symmetry_operations(symOps)
         self.__atoms  = self.__get_atoms_definition(atoms)
-        self.__build_unit_cell(_precision=_precision, _uniqueNames=_uniqueNames)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
+        self.__build_unit_cell(_precision=_precision, _uniqueNames=_uniqueNames)
 
     def __len__(self):
         if self.__supercellElements is None:
@@ -300,6 +301,16 @@ class CrystalMaker(object):
         return builder
 
     @property
+    def unitcellBC(self):
+        """unitcell boundary conditions"""
+        return self.__unitcellBC
+
+    @property
+    def supercellBC(self):
+        """supercell boundary conditions"""
+        return self.__supercellBC
+
+    @property
     def translations(self):
         """tuple of the 26 neighbours translations used to create
         every and each unitcell neighbours list. The order of the translations
@@ -334,6 +345,7 @@ class CrystalMaker(object):
                 'occupancy':copy.deepcopy(self.__unitcellOccupancy),
                 'sequences':copy.deepcopy(self.__unitcellSequences),
                 'segments' :copy.deepcopy(self.__unitcellSegments),
+                'boxCoords': self.__unitcellBoxCoords,
                 'a'        : self.__unitcellBC.get_a(),
                 'b'        : self.__unitcellBC.get_b(),
                 'c'        : self.__unitcellBC.get_c(),
@@ -347,11 +359,12 @@ class CrystalMaker(object):
     @property
     def supercellAttributes(self):
         """get supercell atoms attributes dictionary"""
-        return {'elements' :self.__supercellElements,
-                'names'    :self.__supercellNames,
-                'occupancy':self.__supercellOccupancy,
-                'sequences':self.__supercellSequences,
-                'segments' :self.__supercellSegments,
+        return {'elements' : self.__supercellElements,
+                'names'    : self.__supercellNames,
+                'occupancy': self.__supercellOccupancy,
+                'sequences': self.__supercellSequences,
+                'segments' : self.__supercellSegments,
+                'boxCoords': self.__supercellBoxCoords,
                 'a'        : self.__supercellBC.get_a(),
                 'b'        : self.__supercellBC.get_b(),
                 'c'        : self.__supercellBC.get_c(),
@@ -417,9 +430,11 @@ class CrystalMaker(object):
 
     def __build_unit_cell(self, _precision=None, _uniqueNames=False):
         ## build atoms name lut and ordered position lut
+        bcVects = self.__unitcellBC.get_vectors()
         posLUT   = OrderedDict()
         namesLUT = {}
         nlut     = {}
+        #posCheck = {}
         for aIdx, (el,nm,x,y,z,o) in enumerate(self.__atoms):
             pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
                     i[1].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
@@ -430,6 +445,10 @@ class CrystalMaker(object):
             else:
                 pos = sorted(set([tuple([eval(i)%1 for i in s]) for s in pos]))
             for p in pos:
+                #rp = self.__unitcellBC.box_to_real_array(np.array(p, dtype=float))[0]
+                #rp = tuple([round(i,1) for i in rp])
+                #assert rp not in posCheck, ""
+                #posCheck[rp] = True
                 nlut.setdefault(el,0)
                 nlut[el] += 1
                 atnm = nm
@@ -549,9 +568,9 @@ class CrystalMaker(object):
             els    = [e for e in _elements]
             nms    = [n for n in _names]
             ocp    = [o for o in _occupancy]
-            for i in range(1,supercell[si]):
+            for j in range(1,supercell[si]):
                 v     = np.zeros(3)
-                v[si] = i
+                v[si] = j
                 _boxCoords.extend ( [list(v) for v in coords+v] )
                 _elements.extend(els)
                 _names.extend(nms)
