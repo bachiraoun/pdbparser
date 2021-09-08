@@ -410,7 +410,10 @@ class CrystalMaker(object):
         for idx, item in enumerate(atoms):
             assert isinstance(item, (list,tuple)), "atoms item must be a tuple. Item index %i is not"%idx
             if len(item) == 5:
-                item = [item[0],None,item[1],item[2],item[3],item[4]]
+                if isinstance(item[1], str):
+                    item = [item[0],item[1],item[2],item[3],item[4], 1.0]
+                else:
+                    item = [item[0],None,item[1],item[2],item[3],item[4]]
             assert len(item)==6, "atoms item tuple must have 5 or 6 items. Item index %i is not"%idx
             assert isinstance(item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not"%idx
             assert 1<=len(item[0])<=2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not"%idx
@@ -420,9 +423,6 @@ class CrystalMaker(object):
             assert isinstance(item[2], (int,float)), "atoms item tuple third item (x) must be a number. Item index %i is not"%idx
             assert isinstance(item[3], (int,float)), "atoms item tuple fourth item (y) must be a number. Item index %i is not"%idx
             assert isinstance(item[4], (int,float)), "atoms item tuple fifth item (z) must be a number. Item index %i is not"%idx
-            if len(item)==4:
-                item = list(item)
-                item.append(1)
             assert isinstance(item[5], (int,float)), "atoms item tuple sixth item (occupancy) if given must be a number. Item index %i is not"%idx
             assert 0<=item[5]<=1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not"%idx
             newAtoms.append(tuple(item))
