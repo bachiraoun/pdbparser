@@ -65,7 +65,7 @@ class CrystalMaker(object):
         pdb = maker.get_pdb()
 
     """
-    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _uniqueNames=False):
+    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _distance=0.5, _uniqueNames=False):
         self.__unitcellBC   = self.__supercellBC = None
         self.__translations = (( 1, -1, -1), ( 1, -1, 0), ( 1, -1, 1),
                                ( 1,  0, -1), ( 1,  0, 0), ( 1,  0, 1),
@@ -82,7 +82,7 @@ class CrystalMaker(object):
         self.__symOps = self.__get_symmetry_operations(symOps)
         self.__atoms  = self.__get_atoms_definition(atoms)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
-        self.__build_unit_cell(_precision=_precision, _uniqueNames=_uniqueNames)
+        self.__build_unit_cell(_precision=_precision, _distance=_distance, _uniqueNames=_uniqueNames)
 
     def __len__(self):
         if self.__supercellElements is None:
@@ -91,7 +91,7 @@ class CrystalMaker(object):
             return len(self.__supercellElements)
 
     @classmethod
-    def from_cif(cls, path, resetNames=False, _uniqueNames=False):
+    def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False):
         """Read cif file and instanciate a CrystalMaker instance.
         A valid cif file must contain all of the following
 
@@ -296,7 +296,7 @@ class CrystalMaker(object):
                     break
         assert symOps is not None, "space group symmetry not found"
         # instanciate builder
-        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA], _precision=_precision, _uniqueNames=_uniqueNames)
+        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA], _precision=_precision, _distance=_distance, _uniqueNames=_uniqueNames)
         # return
         return builder
 
@@ -428,7 +428,7 @@ class CrystalMaker(object):
             newAtoms.append(tuple(item))
         return newAtoms
 
-    def __build_unit_cell(self, _precision=None, _uniqueNames=False):
+    def __build_unit_cell(self, _precision=None, _distance=0.5, _uniqueNames=False):
         ## build atoms name lut and ordered position lut
         bcVects = self.__unitcellBC.get_vectors()
         posLUT   = OrderedDict()
@@ -485,6 +485,10 @@ class CrystalMaker(object):
             else:
                 el = val[0][0]
                 nm = val[0][1]
+            if len(boxCoords) and _distance is not None:
+                _dist = self.unitcellBC.box_vectors_real_distance(boxVector=np.array(pos), boxArray=np.array(boxCoords))
+                if len(np.where(_dist<_distance)[0]):
+                    continue
             boxCoords.append(pos)
             names.append(nm)
             elements.append(el)

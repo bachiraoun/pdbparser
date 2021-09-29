@@ -641,8 +641,8 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. difference (numpy.ndarray): the box space difference vectors array.
         """
         # no need to fold into box
-        difference  = boxArray-boxVector
-        rounded = np.where(difference<0, np.ceil(difference-0.5), np.floor(difference+0.5))
+        difference = boxArray-boxVector
+        rounded    = np.where(difference<0, np.ceil(difference-0.5), np.floor(difference+0.5))
         ## THE ABOVE IS VALID AS LONG AS  np.floor(0.5) = 0
         #rounded     = np.zeros(difference.shape)
         #i           = difference>0
@@ -686,7 +686,7 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. boxArray (numpy.ndarray): the box space coordinates to subtract from.
 
         :Returns:
-            #. difference (numpy.ndarray): the box space distance vectors array.
+            #. distance (numpy.ndarray): the box space distance vectors array.
         """
         difference = self.box_difference(boxVector, boxArray).reshape((-1,3))
         return np.sqrt( np.add.reduce( difference**2, axis = 1) )
@@ -700,9 +700,24 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. realArray (numpy.ndarray): the real space coordinates to subtract from.
 
         :Returns:
-            #. difference (numpy.ndarray): the real space distance vectors array.
+            #. distance (numpy.ndarray): the real space distance vectors array.
         """
         difference = self.real_difference(realVector, realArray, index).reshape((-1,3))
+        return np.sqrt( np.add.reduce( difference**2, axis = 1) )
+
+    def box_vectors_real_distance(self, boxVector, boxArray):
+        """
+        Get distance between boxArray and boxVectors points in real space
+
+        :Parameters:
+            #. boxVector (numpy.ndarray): the box space coordinates to subtract.
+            #. boxArray (numpy.ndarray): the box space coordinates to subtract from.
+
+        :Returns:
+            #. distance (numpy.ndarray): the real space distance vectors array.
+        """
+        difference = self.box_difference(boxVector, boxArray).reshape((-1,3))
+        difference = self.box_to_real_array( difference )
         return np.sqrt( np.add.reduce( difference**2, axis = 1) )
 
     def box_to_indexes_histogram(self, boxArray, boxBinLength, index = -1):
