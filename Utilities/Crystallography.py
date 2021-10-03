@@ -4,7 +4,10 @@ This module contains crystallography information.
 # standard libraries imports
 from __future__ import print_function
 from collections import OrderedDict
-import os, sys, random, copy
+import os
+import sys
+import random
+import copy
 if sys.version_info[0] >= 3:
     basestring = str
 
@@ -65,24 +68,26 @@ class CrystalMaker(object):
         pdb = maker.get_pdb()
 
     """
+
     def __init__(self, symOps, atoms, unitcellBC, _precision=None, _distance=0.5, _uniqueNames=False):
-        self.__unitcellBC   = self.__supercellBC = None
-        self.__translations = (( 1, -1, -1), ( 1, -1, 0), ( 1, -1, 1),
-                               ( 1,  0, -1), ( 1,  0, 0), ( 1,  0, 1),
+        self.__unitcellBC = self.__supercellBC = None
+        self.__translations = ((1, -1, -1), (1, -1, 0), (1, -1, 1),
+                               (1,  0, -1), (1,  0, 0), (1,  0, 1),
                                ##
-                               ( 1,  1, -1), ( 1,  1, 0), ( 1,  1, 1),
-                               ( 0,  1, -1), ( 0,  1, 0), ( 0,  1, 1),
-                               ( 0,  0, -1),              ( 0,  0, 1),
-                               ( 0, -1, -1), ( 0, -1, 0), ( 0, -1, 1),
+                               (1,  1, -1), (1,  1, 0), (1,  1, 1),
+                               (0,  1, -1), (0,  1, 0), (0,  1, 1),
+                               (0,  0, -1),              (0,  0, 1),
+                               (0, -1, -1), (0, -1, 0), (0, -1, 1),
                                (-1, -1, -1), (-1, -1, 0), (-1, -1, 1),
                                ##
                                (-1,  0, -1), (-1,  0, 0), (-1,  0, 1),
                                (-1,  1, -1), (-1,  1, 0), (-1,  1, 1),
-                              )
+                               )
         self.__symOps = self.__get_symmetry_operations(symOps)
-        self.__atoms  = self.__get_atoms_definition(atoms)
+        self.__atoms = self.__get_atoms_definition(atoms)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
-        self.__build_unit_cell(_precision=_precision, _distance=_distance, _uniqueNames=_uniqueNames)
+        self.__build_unit_cell(_precision=_precision,
+                               _distance=_distance, _uniqueNames=_uniqueNames)
 
     def __len__(self):
         if self.__supercellElements is None:
@@ -130,9 +135,10 @@ class CrystalMaker(object):
         """
         assert isinstance(resetNames, bool), "resetNames must be boolean"
         ### CHECK CIF DATA ITEMS FROM https://journals.iucr.org/services/cif/reqditems.html
+
         def split_loop_line(line, n):
             splitted = []
-            s  = None
+            s = None
             for i in line.split():
                 if s is None:
                     if i.startswith("'"):
@@ -144,74 +150,88 @@ class CrystalMaker(object):
                 if not len(splitted):
                     splitted.append(i)
                 elif s is not None:
-                    splitted[-1] += ' %s'%i
+                    splitted[-1] += ' %s' % i
                 else:
                     splitted.append(i)
                 if s is not None:
                     if i.endswith(s):
                         splitted[-1] = splitted[-1].strip().strip(s)
                         s = None
-            assert len(splitted) == n, "loop length must be '%i' but '%i' is parsed"%(n, len(splitted))
+            assert len(splitted) == n, "loop length must be '%i' but '%i' is parsed" % (
+                n, len(splitted))
             return splitted
 
         def parse_file(path):
-            if isinstance(path, (list,tuple)):
+            if isinstance(path, (list, tuple)):
                 cifLines = []
                 for l in path:
-                    assert isinstance(l, basestring), LOGGER.error("cif list items must be all strings")
+                    assert isinstance(
+                        l, basestring), "cif list items must be all strings"
                     cifLines.append(l.strip())
             else:
-                assert os.path.isfile(path), "Given cif file path '%s' is not found"%path
+                assert os.path.isfile(
+                    path), "Given cif file path '%s' is not found" % path
                 with open(path, 'r') as fd:
                     cifLines = [l.strip() for l in fd.readlines()]
                 #cifLines = [l for l in cifLines if not l.startswith('#') and len(l)]
             attributes = []
             loopBlocks = []
-            loopData   = []
+            loopData = []
             loopHeader = []
-            loopBuild  = -1
+            loopBuild = -1
             for lidx, l in enumerate(cifLines):
                 if not len(l):
                     loopBuild = -1
                     attributes.append(l)
                     if len(loopData):
-                        loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
-                        loopHeader = []; loopData = []
+                        loopBlocks.append(
+                            dict([(h, v) for h, v in zip(loopHeader, loopData)]))
+                        loopHeader = []
+                        loopData = []
                     continue
                 if l.startswith('#'):
                     continue
                 if l == 'loop_':
                     if len(loopData):
-                        loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
-                    loopHeader = []; loopData = []
+                        loopBlocks.append(
+                            dict([(h, v) for h, v in zip(loopHeader, loopData)]))
+                    loopHeader = []
+                    loopData = []
                     loopBuild = lidx
-                elif loopBuild>0 and l[0] == '_':
-                    assert l not in loopHeader, "@ line '%i' loop header '%s' is defined twice"%(lidx,l)
+                elif loopBuild > 0 and l[0] == '_':
+                    assert l not in loopHeader, "@ line '%i' loop header '%s' is defined twice" % (
+                        lidx, l)
                     loopData.append([])
                     loopHeader.append(l)
                 elif l[0] != '_' and len(loopHeader):
                     loopBuild = -1
                     try:
-                        splitted  = split_loop_line(line=l, n=len(loopHeader))
+                        splitted = split_loop_line(line=l, n=len(loopHeader))
                     except Exception as err:
-                        print("@ line '%i' (%s) loop unexpectedly broken. Unable to split loop line (%s) "%(lidx, l, err))
+                        print(
+                            "@ line '%i' (%s) loop unexpectedly broken. Unable to split loop line (%s) " % (lidx, l, err))
                         loopBuild = -1
                         attributes.append(l)
                         if len(loopData):
-                            loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
-                            loopHeader = []; loopData = []
+                            loopBlocks.append(
+                                dict([(h, v) for h, v in zip(loopHeader, loopData)]))
+                            loopHeader = []
+                            loopData = []
                     else:
-                        for i,s in enumerate(splitted):
+                        for i, s in enumerate(splitted):
                             loopData[i].append(s)
                 else:
                     loopBuild = -1
                     attributes.append(l)
                     if len(loopData):
-                        loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
-                        loopHeader = []; loopData = []
+                        loopBlocks.append(
+                            dict([(h, v) for h, v in zip(loopHeader, loopData)]))
+                        loopHeader = []
+                        loopData = []
             # return
             if len(loopData):
-                loopBlocks.append(dict([(h,v) for h,v in zip(loopHeader,loopData) ]))
+                loopBlocks.append(
+                    dict([(h, v) for h, v in zip(loopHeader, loopData)]))
             return attributes, loopBlocks
 
         # read cif file lines
@@ -240,37 +260,38 @@ class CrystalMaker(object):
         assert GAMMA is not None, "'_cell_angle_gamma' not found in cif file"
         # get atoms
         atoms = []
-        _precision  = {}
+        _precision = {}
         for block in loops:
             if '_atom_site_fract_x' in block and \
                '_atom_site_fract_y' in block and \
                '_atom_site_fract_z' in block:
                 assert '_atom_site_type_symbol' in block or '_atom_site_label' in block, "neither '_atom_site_label' nor '_atom_site_type_symbol' are found in _atom_site loop"
-                l  = None if resetNames else block.get('_atom_site_label', None)
-                s  = block.get('_atom_site_type_symbol', block['_atom_site_label'])
-                x  = block['_atom_site_fract_x']
-                y  = block['_atom_site_fract_y']
-                z  = block['_atom_site_fract_z']
+                l = None if resetNames else block.get('_atom_site_label', None)
+                s = block.get('_atom_site_type_symbol',
+                              block['_atom_site_label'])
+                x = block['_atom_site_fract_x']
+                y = block['_atom_site_fract_y']
+                z = block['_atom_site_fract_z']
                 o = block.get('_atom_site_occupancy', ['1']*len(s))
                 if l is None:
                     l = [None for _ in s]
-                for i,e in enumerate(s):
-                    e = ''.join([i for i in e if i.isalpha() or i==' '])
+                for i, e in enumerate(s):
+                    e = ''.join([i for i in e if i.isalpha() or i == ' '])
                     xi = x[i].split('(')[0]
                     yi = y[i].split('(')[0]
                     zi = z[i].split('(')[0]
                     _precision[len((xi.split('.')[-1]))] = True
                     _precision[len((yi.split('.')[-1]))] = True
                     _precision[len((zi.split('.')[-1]))] = True
-                    atoms.append((e,l[i], float(xi),
-                                          float(yi),
-                                          float(zi),
-                                          float(o[i].split('(')[0])))
+                    atoms.append((e, l[i], float(xi),
+                                  float(yi),
+                                  float(zi),
+                                  float(o[i].split('(')[0])))
                 break
         assert len(atoms), "atom_site loop not found"
         if len(_precision):
             _precision = min(list(_precision))-1
-            if _precision<=2:
+            if _precision <= 2:
                 _precision = None
         else:
             _precision = None
@@ -278,25 +299,26 @@ class CrystalMaker(object):
         symOps = None
         for block in loops:
             if '_space_group_symop_operation_xyz' in block:
-                symOps  = block['_space_group_symop_operation_xyz']
+                symOps = block['_space_group_symop_operation_xyz']
                 break
         if symOps is None:
             for block in loops:
                 if '_symmetry_equiv_pos_as_xyz' in block:
-                    symOps  = block['_symmetry_equiv_pos_as_xyz']
+                    symOps = block['_symmetry_equiv_pos_as_xyz']
                     break
         if symOps is None:
             for a in attributes:
                 if '_space_group_name_H-M' in a:
                     symOps = a.split(' ')[-1].strip().strip("'").strip('"')
-                    symOps = symOps.replace(' ','')
+                    symOps = symOps.replace(' ', '')
                     assert symOps in HM_TO_HALL, "Unable to map Hermann-Mauguin symbol to Hall symbol"
                     symOps = HM_TO_HALL[symOps]
                     symOps = HALL_TO_SYM_OPS[symOps]
                     break
         assert symOps is not None, "space group symmetry not found"
         # instanciate builder
-        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[A,B,C,ALPHA,BETA,GAMMA], _precision=_precision, _distance=_distance, _uniqueNames=_uniqueNames)
+        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[
+                      A, B, C, ALPHA, BETA, GAMMA], _precision=_precision, _distance=_distance, _uniqueNames=_uniqueNames)
         # return
         return builder
 
@@ -335,45 +357,45 @@ class CrystalMaker(object):
     def symmetryAttributes(self):
         """get symmetry attribytes dictionary"""
         return {'operations': copy.deepcopy(self.__symOps),
-                'atoms'     : copy.deepcopy(self.__atoms)}
+                'atoms': copy.deepcopy(self.__atoms)}
 
     @property
     def unitcellAttributes(self):
         """get unitcell atoms attributes dictionary"""
-        return {'elements' :copy.deepcopy(self.__unitcellElements),
-                'names'    :copy.deepcopy(self.__unitcellNames),
-                'occupancy':copy.deepcopy(self.__unitcellOccupancy),
-                'sequences':copy.deepcopy(self.__unitcellSequences),
-                'segments' :copy.deepcopy(self.__unitcellSegments),
+        return {'elements': copy.deepcopy(self.__unitcellElements),
+                'names': copy.deepcopy(self.__unitcellNames),
+                'occupancy': copy.deepcopy(self.__unitcellOccupancy),
+                'sequences': copy.deepcopy(self.__unitcellSequences),
+                'segments': copy.deepcopy(self.__unitcellSegments),
                 'boxCoords': self.__unitcellBoxCoords,
-                'a'        : self.__unitcellBC.get_a(),
-                'b'        : self.__unitcellBC.get_b(),
-                'c'        : self.__unitcellBC.get_c(),
-                'alpha'    : self.__unitcellBC.get_alpha(degrees=True),
-                'beta'     : self.__unitcellBC.get_beta(degrees=True),
-                'gamma'    : self.__unitcellBC.get_gamma(degrees=True),
-                'x'        : self.__unitcellBC.get_vectors()[0,:],
-                'y'        : self.__unitcellBC.get_vectors()[1,:],
-                'z'        : self.__unitcellBC.get_vectors()[2,:] }
+                'a': self.__unitcellBC.get_a(),
+                'b': self.__unitcellBC.get_b(),
+                'c': self.__unitcellBC.get_c(),
+                'alpha': self.__unitcellBC.get_alpha(degrees=True),
+                'beta': self.__unitcellBC.get_beta(degrees=True),
+                'gamma': self.__unitcellBC.get_gamma(degrees=True),
+                'x': self.__unitcellBC.get_vectors()[0, :],
+                'y': self.__unitcellBC.get_vectors()[1, :],
+                'z': self.__unitcellBC.get_vectors()[2, :]}
 
     @property
     def supercellAttributes(self):
         """get supercell atoms attributes dictionary"""
-        return {'elements' : self.__supercellElements,
-                'names'    : self.__supercellNames,
+        return {'elements': self.__supercellElements,
+                'names': self.__supercellNames,
                 'occupancy': self.__supercellOccupancy,
                 'sequences': self.__supercellSequences,
-                'segments' : self.__supercellSegments,
+                'segments': self.__supercellSegments,
                 'boxCoords': self.__supercellBoxCoords,
-                'a'        : self.__supercellBC.get_a(),
-                'b'        : self.__supercellBC.get_b(),
-                'c'        : self.__supercellBC.get_c(),
-                'alpha'    : self.__supercellBC.get_alpha(degrees=True),
-                'beta'     : self.__supercellBC.get_beta(degrees=True),
-                'gamma'    : self.__supercellBC.get_gamma(degrees=True),
-                'x'        : self.__supercellBC.get_vectors()[0,:],
-                'y'        : self.__supercellBC.get_vectors()[1,:],
-                'z'        : self.__supercellBC.get_vectors()[2,:] }
+                'a': self.__supercellBC.get_a(),
+                'b': self.__supercellBC.get_b(),
+                'c': self.__supercellBC.get_c(),
+                'alpha': self.__supercellBC.get_alpha(degrees=True),
+                'beta': self.__supercellBC.get_beta(degrees=True),
+                'gamma': self.__supercellBC.get_gamma(degrees=True),
+                'x': self.__supercellBC.get_vectors()[0, :],
+                'y': self.__supercellBC.get_vectors()[1, :],
+                'z': self.__supercellBC.get_vectors()[2, :]}
 
     @property
     def supercellRejected(self):
@@ -382,129 +404,154 @@ class CrystalMaker(object):
 
     def __get_symmetry_operations(self, symOps):
         ## check symOps
-        assert isinstance(symOps, (list,set,tuple)), "symOps must be a list"
-        assert len(symOps)>=1, "symOps list must not be empty"
+        assert isinstance(symOps, (list, set, tuple)), "symOps must be a list"
+        assert len(symOps) >= 1, "symOps list must not be empty"
         ops = []
         for idx, item in enumerate(symOps):
             if isinstance(item, str):
                 item = item.lower().strip().split(',')
-                assert len(item) == 3, "symOps string must be splittable into 3 operations. symOps index %i is not "%idx
+                assert len(
+                    item) == 3, "symOps string must be splittable into 3 operations. symOps index %i is not " % idx
             else:
-                assert isinstance(item, (list,tuple)), "symOps must be a string or a list. symOps index %i is not "%idx
-                assert len(item) == 3, "symOps list must have 3 items. symOps index %i is not "%idx
-                assert all([isinstance(i, str) for i in item]), "symOps list item must contain only strings. symOps index %i is not "%idx
+                assert isinstance(
+                    item, (list, tuple)), "symOps must be a string or a list. symOps index %i is not " % idx
+                assert len(
+                    item) == 3, "symOps list must have 3 items. symOps index %i is not " % idx
+                assert all([isinstance(i, str) for i in item]
+                           ), "symOps list item must contain only strings. symOps index %i is not " % idx
                 item = [i.lower().strip() for i in item]
-            i0 = ''.join( [i.strip() for i in item[0] if not i.isdigit() and i not in ('/+-xyz,')] ).strip()
-            i1 = ''.join( [i.strip() for i in item[1] if not i.isdigit() and i not in ('/+-xyz,')] ).strip()
-            i2 = ''.join( [i.strip() for i in item[2] if not i.isdigit() and i not in ('/+-xyz,')] ).strip()
-            assert not len(i0) and not len(i1) and not len(i2), "symmetry operation can only contain digits and the following charachters ('+','-','/','x','y','z'). symOps index %i is not "%idx
+            i0 = ''.join([i.strip() for i in item[0]
+                         if not i.isdigit() and i not in ('/+-xyz,')]).strip()
+            i1 = ''.join([i.strip() for i in item[1]
+                         if not i.isdigit() and i not in ('/+-xyz,')]).strip()
+            i2 = ''.join([i.strip() for i in item[2]
+                         if not i.isdigit() and i not in ('/+-xyz,')]).strip()
+            assert not len(i0) and not len(i1) and not len(
+                i2), "symmetry operation can only contain digits and the following charachters ('+','-','/','x','y','z'). symOps index %i is not " % idx
             ops.append(tuple(item))
-        assert len(ops) == len(set(ops)), "symmetry operations redundancy is not allowed"
+        assert len(ops) == len(
+            set(ops)), "symmetry operations redundancy is not allowed"
         return ops
 
     def __get_atoms_definition(self, atoms):
         ## check atoms
-        assert isinstance(atoms, (list,set,tuple)), "atoms must be a list"
-        assert len(atoms)>=1, "atoms list must not be empty"
+        assert isinstance(atoms, (list, set, tuple)), "atoms must be a list"
+        assert len(atoms) >= 1, "atoms list must not be empty"
         newAtoms = []
         for idx, item in enumerate(atoms):
-            assert isinstance(item, (list,tuple)), "atoms item must be a tuple. Item index %i is not"%idx
+            assert isinstance(
+                item, (list, tuple)), "atoms item must be a tuple. Item index %i is not" % idx
             if len(item) == 5:
                 if isinstance(item[1], str):
-                    item = [item[0],item[1],item[2],item[3],item[4], 1.0]
+                    item = [item[0], item[1], item[2], item[3], item[4], 1.0]
                 else:
-                    item = [item[0],None,item[1],item[2],item[3],item[4]]
-            assert len(item)==6, "atoms item tuple must have 5 or 6 items. Item index %i is not"%idx
-            assert isinstance(item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not"%idx
-            assert 1<=len(item[0])<=2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not"%idx
-            assert is_element(item[0]), "Given atom element '%s' is not found in database"%(item[0],)
-            assert not item[0].startswith("$"), "atoms item tuple first item (element) string must not start with '$'. Item index %i is not"%idx
-            assert item[1] is None or isinstance(item[1], str), "atoms item tuple second item (name) must be None or a string. Item index %i is not"%idx
-            assert isinstance(item[2], (int,float)), "atoms item tuple third item (x) must be a number. Item index %i is not"%idx
-            assert isinstance(item[3], (int,float)), "atoms item tuple fourth item (y) must be a number. Item index %i is not"%idx
-            assert isinstance(item[4], (int,float)), "atoms item tuple fifth item (z) must be a number. Item index %i is not"%idx
-            assert isinstance(item[5], (int,float)), "atoms item tuple sixth item (occupancy) if given must be a number. Item index %i is not"%idx
-            assert 0<=item[5]<=1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not"%idx
+                    item = [item[0], None, item[1], item[2], item[3], item[4]]
+            assert len(
+                item) == 6, "atoms item tuple must have 5 or 6 items. Item index %i is not" % idx
+            assert isinstance(
+                item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not" % idx
+            assert 1 <= len(
+                item[0]) <= 2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not" % idx
+            assert is_element(
+                item[0]), "Given atom element '%s' is not found in database" % (item[0],)
+            assert not item[0].startswith(
+                "$"), "atoms item tuple first item (element) string must not start with '$'. Item index %i is not" % idx
+            assert item[1] is None or isinstance(
+                item[1], str), "atoms item tuple second item (name) must be None or a string. Item index %i is not" % idx
+            assert isinstance(
+                item[2], (int, float)), "atoms item tuple third item (x) must be a number. Item index %i is not" % idx
+            assert isinstance(
+                item[3], (int, float)), "atoms item tuple fourth item (y) must be a number. Item index %i is not" % idx
+            assert isinstance(
+                item[4], (int, float)), "atoms item tuple fifth item (z) must be a number. Item index %i is not" % idx
+            assert isinstance(
+                item[5], (int, float)), "atoms item tuple sixth item (occupancy) if given must be a number. Item index %i is not" % idx
+            assert 0 <= item[5] <= 1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not" % idx
             newAtoms.append(tuple(item))
         return newAtoms
 
     def __build_unit_cell(self, _precision=None, _distance=0.5, _uniqueNames=False):
         ## build atoms name lut and ordered position lut
         bcVects = self.__unitcellBC.get_vectors()
-        posLUT   = OrderedDict()
+        posLUT = OrderedDict()
         namesLUT = {}
-        nlut     = {}
+        nlut = {}
         #posCheck = {}
-        for aIdx, (el,nm,x,y,z,o) in enumerate(self.__atoms):
-            pos = [[i[0].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
-                    i[1].replace('x',str(x)).replace('y',str(y)).replace('z',str(z)),
-                    i[2].replace('x',str(x)).replace('y',str(y)).replace('z',str(z))] for i in self.__symOps]
+        for aIdx, (el, nm, x, y, z, o) in enumerate(self.__atoms):
+            pos = [[i[0].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)),
+                    i[1].replace('x', str(x)).replace(
+                        'y', str(y)).replace('z', str(z)),
+                    i[2].replace('x', str(x)).replace('y', str(y)).replace('z', str(z))] for i in self.__symOps]
             #pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
             if _precision is not None:
-                pos = sorted(set([tuple([round(eval(i)%1,_precision) for i in s]) for s in pos]))
+                pos = sorted(
+                    set([tuple([round(eval(i) % 1, _precision) for i in s]) for s in pos]))
             else:
-                pos = sorted(set([tuple([eval(i)%1 for i in s]) for s in pos]))
+                pos = sorted(
+                    set([tuple([eval(i) % 1 for i in s]) for s in pos]))
             for p in pos:
                 #rp = self.__unitcellBC.box_to_real_array(np.array(p, dtype=float))[0]
                 #rp = tuple([round(i,1) for i in rp])
                 #assert rp not in posCheck, ""
                 #posCheck[rp] = True
-                nlut.setdefault(el,0)
+                nlut.setdefault(el, 0)
                 nlut[el] += 1
                 atnm = nm
                 elnm = nlut[el]
-                while (atnm is None) or (_uniqueNames and atnm in namesLUT) or (_uniqueNames and atnm==el):
-                    atnm  = "%s%i"%(el,elnm)
+                while (atnm is None) or (_uniqueNames and atnm in namesLUT) or (_uniqueNames and atnm == el):
+                    atnm = "%s%i" % (el, elnm)
                     elnm += 1
                 namesLUT[atnm] = len(namesLUT)+1
-                posLUT.setdefault(p,[]).append((el,atnm,o))
+                posLUT.setdefault(p, []).append((el, atnm, o))
         ## build atomic sites lut
         sitesLUT = {}
         for pos in posLUT:
             val = posLUT[pos]
             els = [i[0] for i in val]
             tot = sum([i[2] for i in val])
-            assert tot>0 and tot<=1, "occupancy must be >0 and <=1. At coordinates '%s' '%s' occupancy is found betwen '%s' elements"%(pos,tot,els)
-            if len(els)>1:
+            assert tot > 0 and tot <= 1, "occupancy must be >0 and <=1. At coordinates '%s' '%s' occupancy is found betwen '%s' elements" % (
+                pos, tot, els)
+            if len(els) > 1:
                 key = '_'.join(els)
-                key = '$M-%s-%i'%(key,len(sitesLUT))
+                key = '$M-%s-%i' % (key, len(sitesLUT))
             else:
                 key = val[0][1]
             sitesLUT[pos] = key
             sitesLUT[key] = pos
         ## build unit cell coords
         boxCoords = []
-        elements  = []
-        names     = []
+        elements = []
+        names = []
         occupancy = []
         for pos in posLUT:
             val = posLUT[pos]
-            oc  = sum([i[2] for i in val])
-            if  sitesLUT[pos].startswith("$M-"):
+            oc = sum([i[2] for i in val])
+            if sitesLUT[pos].startswith("$M-"):
                 el = nm = sitesLUT[pos]
             else:
                 el = val[0][0]
                 nm = val[0][1]
             if len(boxCoords) and _distance is not None:
-                _dist = self.unitcellBC.box_vectors_real_distance(boxVector=np.array(pos), boxArray=np.array(boxCoords))
-                if len(np.where(_dist<_distance)[0]):
+                _dist = self.unitcellBC.box_vectors_real_distance(
+                    boxVector=np.array(pos), boxArray=np.array(boxCoords))
+                if len(np.where(_dist < _distance)[0]):
                     continue
             boxCoords.append(pos)
             names.append(nm)
             elements.append(el)
             occupancy.append(oc)
         sequences = [1]*len(boxCoords)
-        segments  = ['1']*len(boxCoords)
+        segments = ['1']*len(boxCoords)
         # set attributes
-        self.__posLUT            = posLUT
-        self.__sitesLUT          = sitesLUT
-        self.__namesLUT          = namesLUT
+        self.__posLUT = posLUT
+        self.__sitesLUT = sitesLUT
+        self.__namesLUT = namesLUT
         self.__unitcellBoxCoords = boxCoords
-        self.__unitcellElements  = elements
-        self.__unitcellNames     = names
+        self.__unitcellElements = elements
+        self.__unitcellNames = names
         self.__unitcellOccupancy = occupancy
         self.__unitcellSequences = sequences
-        self.__unitcellSegments  = segments
+        self.__unitcellSegments = segments
 
     def set_unitcell_boundary_conditions(self, unitcellBC):
         """Set unitcell boundary conditions.
@@ -520,29 +567,31 @@ class CrystalMaker(object):
         if not isinstance(unitcellBC, PeriodicBoundaries):
             if isinstance(unitcellBC, np.ndarray):
                 BC = PeriodicBoundaries(params=unitcellBC)
-            elif isinstance(unitcellBC, (list,tuple)):
+            elif isinstance(unitcellBC, (list, tuple)):
                 if len(unitcellBC) == 3:
                     BC = PeriodicBoundaries(params=unitcellBC)
                 else:
-                    assert len(unitcellBC) == 6, "list boundary conditions must have 6 items"
+                    assert len(
+                        unitcellBC) == 6, "list boundary conditions must have 6 items"
                     BC = PeriodicBoundaries(params=None)
                     BC.set_vectors_using_abc_alpha_beta_gamma(*unitcellBC)
             else:
-                raise Exception("bc must be PeriodicBoundaries instance, a numpy array or a list")
+                raise Exception(
+                    "bc must be PeriodicBoundaries instance, a numpy array or a list")
         else:
             assert len(unitcellBC), "PeriodicBoundaries unitcellBC is empty"
             BC = unitcellBC
         # reset supercell
-        self.__supercell          = None
-        self.__supercellBC        = None
+        self.__supercell = None
+        self.__supercellBC = None
         self.__supercellBoxCoords = None
-        self.__supercellElements  = None
-        self.__supercellNames     = None
+        self.__supercellElements = None
+        self.__supercellNames = None
         self.__supercellSequences = None
-        self.__supercellSegments  = None
+        self.__supercellSegments = None
         self.__supercellOccupancy = None
-        self.__supercellRejected  = None
-        self.__unitcells          = None
+        self.__supercellRejected = None
+        self.__unitcells = None
         # set boundary conditions
         self.__unitcellBC = BC
 
@@ -555,41 +604,43 @@ class CrystalMaker(object):
         """
         ## check supercell
         if supercell is None:
-            supercell = (1,1,1)
-        assert isinstance(supercell, (list,tuple)), "supercell must be None or a list"
-        assert len(supercell)==3, "supercell if given must be of length 3"
-        assert all([isinstance(i,int) for i in supercell]), "supercell items must integers"
-        assert all([i>=1 for i in supercell]), "supercell items must be >=1"
+            supercell = (1, 1, 1)
+        assert isinstance(supercell, (list, tuple)
+                          ), "supercell must be None or a list"
+        assert len(supercell) == 3, "supercell if given must be of length 3"
+        assert all([isinstance(i, int)
+                   for i in supercell]), "supercell items must integers"
+        assert all([i >= 1 for i in supercell]), "supercell items must be >=1"
         ## build supercell for all atomic sites
-        _elements  = copy.deepcopy(self.__unitcellElements)
-        _names     = copy.deepcopy(self.__unitcellNames)
+        _elements = copy.deepcopy(self.__unitcellElements)
+        _names = copy.deepcopy(self.__unitcellNames)
         _occupancy = copy.deepcopy(self.__unitcellOccupancy)
         _boxCoords = copy.deepcopy(self.__unitcellBoxCoords)
         for si, i in enumerate(supercell):
-            if i<=1:
+            if i <= 1:
                 continue
             coords = np.array(_boxCoords)
-            els    = [e for e in _elements]
-            nms    = [n for n in _names]
-            ocp    = [o for o in _occupancy]
-            for j in range(1,supercell[si]):
-                v     = np.zeros(3)
+            els = [e for e in _elements]
+            nms = [n for n in _names]
+            ocp = [o for o in _occupancy]
+            for j in range(1, supercell[si]):
+                v = np.zeros(3)
                 v[si] = j
-                _boxCoords.extend ( [list(v) for v in coords+v] )
+                _boxCoords.extend([list(v) for v in coords+v])
                 _elements.extend(els)
                 _names.extend(nms)
                 _occupancy.extend(ocp)
         ## create segment and sequences and unitcells
         ucl = len(self.__unitcellSegments)
         seqIdx = segIdx = 0
-        _segments  = []
+        _segments = []
         _sequences = []
         _unitcells = []
-        ucIndex    = 0
-        while len(_segments)<len(_occupancy):
+        ucIndex = 0
+        while len(_segments) < len(_occupancy):
             seqIdx += 1
-            if seqIdx>9999:
-                seqIdx  = 1
+            if seqIdx > 9999:
+                seqIdx = 1
                 segIdx += 1
             _segments.extend([str(segIdx)]*ucl)
             _sequences.extend([seqIdx]*ucl)
@@ -597,12 +648,12 @@ class CrystalMaker(object):
             ucIndex += 1
         ## adjust sites occupancy
         boxCoords = []
-        elements  = []
-        names     = []
+        elements = []
+        names = []
         sequences = []
-        segments  = []
+        segments = []
         occupancy = []
-        rejected  = []
+        rejected = []
         unitcells = []
         for idx, el in enumerate(_elements):
             oc = _occupancy[idx]
@@ -612,24 +663,26 @@ class CrystalMaker(object):
                 pos = self.__sitesLUT[el]
                 ats = self.__posLUT[pos]
                 rnd = random.random()
-                o   = 0
-                el  = nm = None
-                for e,n,_o in ats:
+                o = 0
+                el = nm = None
+                for e, n, _o in ats:
                     o += _o
-                    if rnd<=o:
+                    if rnd <= o:
                         el = e
                         nm = n
                         break
                 if el is None:
                     # site must remain empty
-                    rejected.append({'cell_position':pos,'supercell_position':bc,'atoms':ats})
+                    rejected.append(
+                        {'cell_position': pos, 'supercell_position': bc, 'atoms': ats})
                     continue
-            elif oc<1:
-                if random.random()>oc:
+            elif oc < 1:
+                if random.random() > oc:
                     # site must remain empty
                     pos = self.__sitesLUT[nm]
                     ats = self.__posLUT[pos]
-                    rejected.append({'cell_position':pos,'supercell_position':bc,'atoms':ats})
+                    rejected.append(
+                        {'cell_position': pos, 'supercell_position': bc, 'atoms': ats})
                     continue
             boxCoords.append(bc)
             elements.append(el)
@@ -639,31 +692,32 @@ class CrystalMaker(object):
             unitcells.append(_unitcells[idx])
             occupancy.append(oc)
         # get supercell boundary conditions
-        x = supercell[0] * self.__unitcellBC.get_vectors()[0,:]
-        y = supercell[1] * self.__unitcellBC.get_vectors()[1,:]
-        z = supercell[2] * self.__unitcellBC.get_vectors()[2,:]
-        BC = PeriodicBoundaries(params=[x,y,z])
+        x = supercell[0] * self.__unitcellBC.get_vectors()[0, :]
+        y = supercell[1] * self.__unitcellBC.get_vectors()[1, :]
+        z = supercell[2] * self.__unitcellBC.get_vectors()[2, :]
+        BC = PeriodicBoundaries(params=[x, y, z])
         # set supercell parameters
-        self.__supercell          = tuple(supercell)
-        self.__supercellBC        = BC
+        self.__supercell = tuple(supercell)
+        self.__supercellBC = BC
         self.__supercellBoxCoords = np.array(boxCoords)
-        self.__supercellElements  = elements
-        self.__supercellNames     = names
+        self.__supercellElements = elements
+        self.__supercellNames = names
         self.__supercellSequences = sequences
-        self.__supercellSegments  = segments
+        self.__supercellSegments = segments
         self.__supercellOccupancy = occupancy
-        self.__supercellRejected  = rejected
+        self.__supercellRejected = rejected
         # build unitcells neighbours list
-        ucLUT = dict([(i,[]) for i in range(supercell[0]*supercell[1]*supercell[2])])
+        ucLUT = dict([(i, [])
+                     for i in range(supercell[0]*supercell[1]*supercell[2])])
         for idx, i in enumerate(unitcells):
             ucLUT[i].append(idx)
         unitcells = []
         for i in range(supercell[0]*supercell[1]*supercell[2]):
-            neighs  = self.get_unitcell_neighbours(i)
-            pos     = self.unitcell_index_to_supercell(i)
-            unitcells.append({'indexes':ucLUT[i], 'position':pos, 'neighbours':neighs})
+            neighs = self.get_unitcell_neighbours(i)
+            pos = self.unitcell_index_to_supercell(i)
+            unitcells.append(
+                {'indexes': ucLUT[i], 'position': pos, 'neighbours': neighs})
         self.__unitcells = unitcells
-
 
     def unitcell_index_to_supercell(self, i):
         """Convert unitcell index to the supercell (x,y,z) coordinates
@@ -678,14 +732,14 @@ class CrystalMaker(object):
             #. z (int): unitcell index position in the z axis of the supercell
         """
         assert self.__supercell is not None, "supercell is not created yet"
-        sx,sy,sz = self.__supercell
-        z = int( float(i) / float(sx*sy)  )
+        sx, sy, sz = self.__supercell
+        z = int(float(i) / float(sx*sy))
         i = i-z*sx*sy
-        y = int( float(i) / float(sx)  )
+        y = int(float(i) / float(sx))
         x = i-y*sx
-        return int(x),int(y),int(z)
+        return int(x), int(y), int(z)
 
-    def unitcell_supercell_to_index(self,x,y,z):
+    def unitcell_supercell_to_index(self, x, y, z):
         """Convert unitcell x,y and z in the supercell to the absolute index
 
         :Parameters:
@@ -698,7 +752,7 @@ class CrystalMaker(object):
                supercell[0] * supercell[1] * supercell[2]
         """
         assert self.__supercell is not None, "supercell is not created yet"
-        sx,sy,sz = self.__supercell
+        sx, sy, sz = self.__supercell
         return int(z*sx*sy + y*sx + x)
 
     def get_unitcell_neighbours(self, i, translations=None):
@@ -715,11 +769,12 @@ class CrystalMaker(object):
             #. neighbours (list): list of unitcell neighbours in the order
                of translations
         """
-        x,y,z = self.unitcell_index_to_supercell(i)
-        trans = self.get_supercell_neighbours(x=x,y=y,z=z,translations=translations)
-        return [self.unitcell_supercell_to_index(x,y,z) for x,y,z in trans]
+        x, y, z = self.unitcell_index_to_supercell(i)
+        trans = self.get_supercell_neighbours(
+            x=x, y=y, z=z, translations=translations)
+        return [self.unitcell_supercell_to_index(x, y, z) for x, y, z in trans]
 
-    def get_supercell_neighbours(self, x,y,z, translations=None):
+    def get_supercell_neighbours(self, x, y, z, translations=None):
         """compute unitcell neighbours given unitcell x,y and z positions in
         the supercell
 
@@ -736,10 +791,10 @@ class CrystalMaker(object):
                of translations
         """
         assert self.__supercell is not None, "supercell is not created yet"
-        sx,sy,sz = self.__supercell
+        sx, sy, sz = self.__supercell
         if translations is None:
             translations = self.__translations
-        return [[(x+t[0])%sx, (y+t[1])%sy, (z+t[2])%sz ] for t in translations]
+        return [[(x+t[0]) % sx, (y+t[1]) % sy, (z+t[2]) % sz] for t in translations]
 
     def get_supercell_real_coordinates(self, fold=True):
         """compute and return supercell real atomic coordinates
@@ -769,9 +824,9 @@ class CrystalMaker(object):
         assert self.__supercell is not None, "supercell is not defined"
         # normalize box coordinates
         boxCoords = copy.deepcopy(self.__supercellBoxCoords)
-        boxCoords[:,0] /= float(self.__supercell[0])
-        boxCoords[:,1] /= float(self.__supercell[1])
-        boxCoords[:,2] /= float(self.__supercell[2])
+        boxCoords[:, 0] /= float(self.__supercell[0])
+        boxCoords[:, 1] /= float(self.__supercell[1])
+        boxCoords[:, 2] /= float(self.__supercell[2])
         if fold:
             boxCoords = self.__supercellBC.fold_box_array(boxCoords)
         return boxCoords
@@ -788,17 +843,17 @@ class CrystalMaker(object):
         from pdbparser import pdbparser
         from pdbparser.Utilities import Database
         records = []
-        rec     = copy.copy(Database.__ATOM__)
-        rec['residue_name'] = 'CRY' # crystallographic unitcell
-        for idx,el in enumerate(self.__supercellElements):
-            x,y,z = realCoords[idx,:]
-            rec   = copy.copy(rec)
-            rec['coordinates_x']      = x
-            rec['coordinates_y']      = y
-            rec['coordinates_z']      = z
-            rec['element_symbol']     = el
-            rec['atom_name']          = self.__supercellNames[idx]
-            rec['sequence_number']    = self.__supercellSequences[idx]
+        rec = copy.copy(Database.__ATOM__)
+        rec['residue_name'] = 'CRY'  # crystallographic unitcell
+        for idx, el in enumerate(self.__supercellElements):
+            x, y, z = realCoords[idx, :]
+            rec = copy.copy(rec)
+            rec['coordinates_x'] = x
+            rec['coordinates_y'] = y
+            rec['coordinates_z'] = z
+            rec['element_symbol'] = el
+            rec['atom_name'] = self.__supercellNames[idx]
+            rec['sequence_number'] = self.__supercellSequences[idx]
             rec['segment_identifier'] = self.__supercellSegments[idx]
             records.append(rec)
         # create pdb
@@ -811,12 +866,8 @@ class CrystalMaker(object):
         return pdb
 
 
-
-
-
 ## THE FOLLOWING IS A MODIFIED VERSION OF THE FOLLOWING
 ## https://github.com/LaurentRDC/crystals/blob/master/crystals/spg_data.py
-
 # Dictionary for going from Hermann-Mauguin symbol to Hall symbol.
 HM_TO_HALL = {
         #   1
@@ -2108,7 +2159,8 @@ HM_TO_HALL = {
         "F4/mmm": "-F 4 2",
     }
 # append lower case compact keys
-HM_TO_HALL.update( {k.lower().replace(' ',''):HM_TO_HALL[k] for k in HM_TO_HALL} )
+HM_TO_HALL.update(
+    {k.lower().replace(' ', ''): HM_TO_HALL[k] for k in HM_TO_HALL})
 
 # Space group number for each Hall symbol
 # Dictionary for going from Hall symbol to space group number (integer).
@@ -12605,4 +12657,5 @@ HALL_TO_SYM_OPS = {
         ],
     }
 
-HALL_TO_SYM_OPS.update( {k.lower().replace(' ',''):HALL_TO_SYM_OPS[k] for k in HALL_TO_SYM_OPS} )
+HALL_TO_SYM_OPS.update(
+    {k.lower().replace(' ', ''): HALL_TO_SYM_OPS[k] for k in HALL_TO_SYM_OPS})
