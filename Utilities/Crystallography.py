@@ -848,12 +848,13 @@ class CrystalMaker(object):
         for idx, el in enumerate(self.__supercellElements):
             x, y, z = realCoords[idx, :]
             rec = copy.copy(rec)
-            rec['coordinates_x'] = x
-            rec['coordinates_y'] = y
-            rec['coordinates_z'] = z
-            rec['element_symbol'] = el
-            rec['atom_name'] = self.__supercellNames[idx]
-            rec['sequence_number'] = self.__supercellSequences[idx]
+            rec['coordinates_x']      = x
+            rec['coordinates_y']      = y
+            rec['coordinates_z']      = z
+            rec['serial_number']      = idx
+            rec['element_symbol']     = el
+            rec['atom_name']          = self.__supercellNames[idx]
+            rec['sequence_number']    = self.__supercellSequences[idx]
             rec['segment_identifier'] = self.__supercellSegments[idx]
             records.append(rec)
         # create pdb
