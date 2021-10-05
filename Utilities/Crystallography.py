@@ -15,7 +15,7 @@ if sys.version_info[0] >= 3:
 import numpy as np
 
 # pdbparser library imports
-from .Database import is_element
+from .Database import is_element, __ATOM__
 from .BoundaryConditions import PeriodicBoundaries
 
 
@@ -841,9 +841,8 @@ class CrystalMaker(object):
         realCoords = self.get_supercell_real_coordinates()
         # build pdb
         from pdbparser import pdbparser
-        from pdbparser.Utilities import Database
         records = []
-        rec = copy.copy(Database.__ATOM__)
+        rec = copy.copy(__ATOM__)
         rec['residue_name'] = 'CRY'  # crystallographic unitcell
         for idx, el in enumerate(self.__supercellElements):
             x, y, z = realCoords[idx, :]
@@ -851,7 +850,7 @@ class CrystalMaker(object):
             rec['coordinates_x'] = x
             rec['coordinates_y'] = y
             rec['coordinates_z'] = z
-            rec['serial_number'] = idx
+            rec['serial_number'] = idx+1
             rec['element_symbol'] = el
             rec['atom_name'] = self.__supercellNames[idx]
             rec['sequence_number'] = self.__supercellSequences[idx]
