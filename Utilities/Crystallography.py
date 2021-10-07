@@ -4,10 +4,7 @@ This module contains crystallography information.
 # standard libraries imports
 from __future__ import print_function
 from collections import OrderedDict
-import os
-import sys
-import random
-import copy
+import os, sys, random, copy, time
 if sys.version_info[0] >= 3:
     basestring = str
 
@@ -58,7 +55,8 @@ class CrystalMaker(object):
         alpha     = 90.    # (alpha, the angle between b and c)
         beta      = 125.55 # (beta,  the angle between a and c)
         gamma     = 90.    # (gamma, the angle between a and b)
-        maker = CR.CrystalMaker(symOps=ops, atoms=atoms, unitcellBC=[a,b,c,alpha,beta,gamma])
+        maker = CR.CrystalMaker(symOps=ops, atoms=atoms, unitcellBC=[
+                                a,b,c,alpha,beta,gamma])
         maker.create_supercell((10,10,10))
         pdb = maker.get_pdb()
 
@@ -290,7 +288,7 @@ class CrystalMaker(object):
                 break
         assert len(atoms), "atom_site loop not found"
         if len(_precision):
-            _precision = min(list(_precision))-1
+            _precision = min(list(_precision))#-1
             if _precision <= 2:
                 _precision = None
         else:
@@ -360,6 +358,19 @@ class CrystalMaker(object):
                 'atoms': copy.deepcopy(self.__atoms)}
 
     @property
+    def sitesSymmetry(self):
+        """atoms site symmetry tuple"""
+        return tuple(self.__sitesSymmetry)
+
+    @property
+    def sitesSymmetryDict(self):
+        """atoms site symmetry ordered dictionary"""
+        equ = OrderedDict()
+        for idx, (k, v) in enumerate(self.__sitesSymmetry):
+            equ.setdefault(k,[]).append((idx,v))
+        return equ
+
+    @property
     def unitcellAttributes(self):
         """get unitcell atoms attributes dictionary"""
         return {'elements': copy.deepcopy(self.__unitcellElements),
@@ -368,6 +379,7 @@ class CrystalMaker(object):
                 'sequences': copy.deepcopy(self.__unitcellSequences),
                 'segments': copy.deepcopy(self.__unitcellSegments),
                 'boxCoords': self.__unitcellBoxCoords,
+                'sitesSymmetry':copy.deepcopy(self.__sitesSymmetry),
                 'a': self.__unitcellBC.get_a(),
                 'b': self.__unitcellBC.get_b(),
                 'c': self.__unitcellBC.get_c(),
@@ -472,28 +484,36 @@ class CrystalMaker(object):
 
     def __build_unit_cell(self, _precision=None, _distance=0.5, _uniqueNames=False):
         ## build atoms name lut and ordered position lut
-        bcVects = self.__unitcellBC.get_vectors()
-        posLUT = OrderedDict()
+        posLUT   = OrderedDict()
         namesLUT = {}
-        nlut = {}
-        #posCheck = {}
+        nlut     = {}
+        bCoords  = []
+        sitesSym = []
+        bcd      = []
         for aIdx, (el, nm, x, y, z, o) in enumerate(self.__atoms):
-            pos = [[i[0].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)),
-                    i[1].replace('x', str(x)).replace(
-                        'y', str(y)).replace('z', str(z)),
-                    i[2].replace('x', str(x)).replace('y', str(y)).replace('z', str(z))] for i in self.__symOps]
-            #pos = sorted(set([tuple([round(eval(i)%1,5) for i in s]) for s in pos]))
-            if _precision is not None:
-                pos = sorted(
-                    set([tuple([round(eval(i) % 1, _precision) for i in s]) for s in pos]))
-            else:
-                pos = sorted(
-                    set([tuple([eval(i) % 1 for i in s]) for s in pos]))
+            # replace with actual values and check for redundancy given _precision
+            pos = {}
+            for so in self.__symOps:
+                p = [ so[0].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)),
+                      so[1].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)),
+                      so[2].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)) ]
+                if _precision is not None:
+                    p = tuple([round(eval(i) % 1, _precision) for i in p])
+                else:
+                    p = tuple([eval(i) % 1 for i in p])
+                if p in pos:
+                    #print('stage 1 correction:', "%s is redundant given precisions %s"%(p, _precision))
+                    continue
+                if len(bcd) and _distance is not None:
+                    _dist = self.unitcellBC.box_vectors_real_distance(boxVector=np.array(p), boxArray=np.array(bcd))
+                    _idxs = np.where(_dist < _distance)[0]
+                    if len(_idxs):
+                        #print('stage 2 correction:', "%s is redundant given distance %s"%(p, _distance))
+                        continue
+                pos[p] = so
+                bcd.append(p)
+            # check for redundancies
             for p in pos:
-                #rp = self.__unitcellBC.box_to_real_array(np.array(p, dtype=float))[0]
-                #rp = tuple([round(i,1) for i in rp])
-                #assert rp not in posCheck, ""
-                #posCheck[rp] = True
                 nlut.setdefault(el, 0)
                 nlut[el] += 1
                 atnm = nm
@@ -502,7 +522,10 @@ class CrystalMaker(object):
                     atnm = "%s%i" % (el, elnm)
                     elnm += 1
                 namesLUT[atnm] = len(namesLUT)+1
+                if p not in posLUT:
+                    bCoords.append(p)
                 posLUT.setdefault(p, []).append((el, atnm, o))
+                sitesSym.append(((aIdx,(x, y, z)), pos[p]))
         ## build atomic sites lut
         sitesLUT = {}
         for pos in posLUT:
@@ -520,8 +543,8 @@ class CrystalMaker(object):
             sitesLUT[key] = pos
         ## build unit cell coords
         boxCoords = []
-        elements = []
-        names = []
+        elements  = []
+        names     = []
         occupancy = []
         for pos in posLUT:
             val = posLUT[pos]
@@ -531,11 +554,6 @@ class CrystalMaker(object):
             else:
                 el = val[0][0]
                 nm = val[0][1]
-            if len(boxCoords) and _distance is not None:
-                _dist = self.unitcellBC.box_vectors_real_distance(
-                    boxVector=np.array(pos), boxArray=np.array(boxCoords))
-                if len(np.where(_dist < _distance)[0]):
-                    continue
             boxCoords.append(pos)
             names.append(nm)
             elements.append(el)
@@ -543,15 +561,16 @@ class CrystalMaker(object):
         sequences = [1]*len(boxCoords)
         segments = ['1']*len(boxCoords)
         # set attributes
-        self.__posLUT = posLUT
-        self.__sitesLUT = sitesLUT
-        self.__namesLUT = namesLUT
+        self.__posLUT            = posLUT
+        self.__sitesLUT          = sitesLUT
+        self.__namesLUT          = namesLUT
+        self.__sitesSymmetry     = sitesSym
         self.__unitcellBoxCoords = boxCoords
-        self.__unitcellElements = elements
-        self.__unitcellNames = names
+        self.__unitcellElements  = elements
+        self.__unitcellNames     = names
         self.__unitcellOccupancy = occupancy
         self.__unitcellSequences = sequences
-        self.__unitcellSegments = segments
+        self.__unitcellSegments  = segments
 
     def set_unitcell_boundary_conditions(self, unitcellBC):
         """Set unitcell boundary conditions.
@@ -718,6 +737,8 @@ class CrystalMaker(object):
             unitcells.append(
                 {'indexes': ucLUT[i], 'position': pos, 'neighbours': neighs})
         self.__unitcells = unitcells
+        # return self
+        return self
 
     def unitcell_index_to_supercell(self, i):
         """Convert unitcell index to the supercell (x,y,z) coordinates
@@ -12657,5 +12678,4 @@ HALL_TO_SYM_OPS = {
         ],
     }
 
-HALL_TO_SYM_OPS.update(
-    {k.lower().replace(' ', ''): HALL_TO_SYM_OPS[k] for k in HALL_TO_SYM_OPS})
+HALL_TO_SYM_OPS.update({k.lower().replace(' ', ''): HALL_TO_SYM_OPS[k] for k in HALL_TO_SYM_OPS})
