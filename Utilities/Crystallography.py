@@ -525,7 +525,7 @@ class CrystalMaker(object):
                 if p not in posLUT:
                     bCoords.append(p)
                 posLUT.setdefault(p, []).append((el, atnm, o))
-                sitesSym.append(((aIdx,(x, y, z)), pos[p]))
+                sitesSym.append(((aIdx,el,(x, y, z)), pos[p]))
         ## build atomic sites lut
         sitesLUT = {}
         for pos in posLUT:
