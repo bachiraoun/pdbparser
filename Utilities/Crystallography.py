@@ -615,7 +615,7 @@ class CrystalMaker(object):
         self.__unitcellBC = BC
 
     def create_supercell(self, supercell=None):
-        """Create a supercell from the stored unicell
+        """Create a supercell from the stored unitcell
 
         :Parameters:
             #. supercell (None, tuple): supercell dimension to create. If None
