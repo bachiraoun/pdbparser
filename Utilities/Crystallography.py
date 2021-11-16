@@ -631,8 +631,8 @@ class CrystalMaker(object):
                    for i in supercell]), "supercell items must integers"
         assert all([i >= 1 for i in supercell]), "supercell items must be >=1"
         ## build supercell for all atomic sites
-        _elements = copy.deepcopy(self.__unitcellElements)
-        _names = copy.deepcopy(self.__unitcellNames)
+        _elements  = copy.deepcopy(self.__unitcellElements)
+        _names     = copy.deepcopy(self.__unitcellNames)
         _occupancy = copy.deepcopy(self.__unitcellOccupancy)
         _boxCoords = copy.deepcopy(self.__unitcellBoxCoords)
         for si, i in enumerate(supercell):
@@ -652,10 +652,10 @@ class CrystalMaker(object):
         ## create segment and sequences and unitcells
         ucl = len(self.__unitcellSegments)
         seqIdx = segIdx = 0
-        _segments = []
+        _segments  = []
         _sequences = []
         _unitcells = []
-        ucIndex = 0
+        ucIndex    = 0
         while len(_segments) < len(_occupancy):
             seqIdx += 1
             if seqIdx > 9999:
@@ -667,12 +667,12 @@ class CrystalMaker(object):
             ucIndex += 1
         ## adjust sites occupancy
         boxCoords = []
-        elements = []
-        names = []
+        elements  = []
+        names     = []
         sequences = []
-        segments = []
+        segments  = []
         occupancy = []
-        rejected = []
+        rejected  = []
         unitcells = []
         for idx, el in enumerate(_elements):
             oc = _occupancy[idx]
