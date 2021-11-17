@@ -1067,6 +1067,79 @@ class pdbparser(object):
         """
         return get_records_attribute_values(self.indexes, self, attribute)
 
+
+    def get_supercell(self, supercell, incSerNum=True, incSeqNum=True):
+        """create pdb supercell
+
+        :parameters:
+            #. supercell (tuple): defines how big of a supercell is needed
+        """
+        if not isinstance(self._boundaryConditions, PeriodicBoundaries):
+            raise Logger.error("contiguous configuration is not possible with infinite boundaries trajectory")
+        if isinstance(supercell, (list,tuple)):
+            assert len(supercell) == 3, LOGGER.error("@optimizer[{on}] {nm} list must have 3 items".format(on=self.__name, nm=_name))
+        else:
+            supercell = (supercell, supercell, supercell)
+        # all integers
+        sc = []
+        for i in supercell:
+            try:
+                i = int(i)
+                assert i>0
+                sc.append(i)
+            except:
+                raise Exception(Logger.error('supercell must be an integer or a list of integers >0'))
+        supercell = tuple(sc)
+        # ge incrementing values
+        snInc = sqInc = 0
+        if incSerNum:
+            try:
+                snInc = max([int(r['serial_number']) for r in self.records]) + 1
+            except:
+                snInc = 1
+        if incSeqNum:
+            try:
+                sqInc = max([int(r['sequence_number']) for r in self.records]) + 1
+            except:
+                sqInc = 1
+        # create supercell boundary conditions
+        SCBC = PeriodicBoundaries()
+        bv   = np.copy(self._boundaryConditions.get_vectors())
+        bv[0,:] *= supercell[0]
+        bv[1,:] *= supercell[1]
+        bv[2,:] *= supercell[2]
+        SCBC.set_vectors(bv)
+        # get box coordinates
+        boxCoords  = self._boundaryConditions.real_to_box_array(self.coordinates)
+        scCoords   = []
+        records    = []
+        inc        = 0
+        scArray    = np.array(supercell, dtype=float)
+        for i in range(supercell[0]):
+            for j in range(supercell[1]):
+                for k in range(supercell[2]):
+                    coords = boxCoords+np.array([i,j,k])
+                    coords[:,0] /= scArray[0]
+                    coords[:,1] /= scArray[1]
+                    coords[:,2] /= scArray[2]
+                    coords = SCBC.box_to_real_array(coords)
+                    # append records
+                    for idx, r in enumerate(copy.deepcopy(self.records)):
+                        r['coordinates_x'] = coords[idx,0]
+                        r['coordinates_y'] = coords[idx,1]
+                        r['coordinates_z'] = coords[idx,2]
+                        r['serial_number']   += snInc*inc
+                        r['sequence_number'] += sqInc*inc
+                        records.append(r)
+                    inc += 1
+        # create array
+        pdb = pdbparser()
+        pdb.records = records
+        pdb._boundaryConditions = SCBC
+        # return
+        return pdb
+
+
     def get_configuration_coordinates(self, index):
         """
         Get a single configuration all atoms coordinates.

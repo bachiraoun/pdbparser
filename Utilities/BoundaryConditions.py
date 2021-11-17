@@ -600,11 +600,14 @@ class PeriodicBoundaries(InfiniteBoundaries):
 
         :Parameters:
             #. realArray (numpy.ndarray): the real space coordinates.
-            #. ref (integer): reference atom index
+            #. ref (None, integer): reference atom index. If None,
+               closest atom to the the geometric center will be used.
 
         :Returns:
             #. foldedArray (numpy.ndarray): the folded into real coordinates box array.
         """
+        if ref is None:
+            ref = np.argmin( np.sum((boxArray - np.mean(boxArray, axis=0))**2, axis=1) )
         # incrementally construct cluster starting from first point
         diff = boxArray-boxArray[ref,:]
         # remove multiple box distances
