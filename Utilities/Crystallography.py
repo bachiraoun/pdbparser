@@ -4,7 +4,7 @@ This module contains crystallography information.
 # standard libraries imports
 from __future__ import print_function
 from collections import OrderedDict
-import os, sys, random, copy, time
+import os, sys, random, copy, time, ast
 if sys.version_info[0] >= 3:
     basestring = str
 
@@ -67,7 +67,7 @@ class CrystalMaker(object):
 
     """
 
-    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _distance=0.5, _uniqueNames=False):
+    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
         self.__unitcellBC = self.__supercellBC = None
         self.__translations = ((1, -1, -1), (1, -1, 0), (1, -1, 1),
                                (1,  0, -1), (1,  0, 0), (1,  0, 1),
@@ -85,7 +85,9 @@ class CrystalMaker(object):
         self.__atoms = self.__get_atoms_definition(atoms)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
         self.__build_unit_cell(_precision=_precision,
-                               _distance=_distance, _uniqueNames=_uniqueNames)
+                               _distance=_distance,
+                               _uniqueNames=_uniqueNames,
+                               _pdbAtomsAttribute=_pdbAtomsAttribute)
 
     def __len__(self):
         if self.__supercellElements is None:
@@ -133,7 +135,7 @@ class CrystalMaker(object):
         """
         assert isinstance(resetNames, bool), "resetNames must be boolean"
         ### CHECK CIF DATA ITEMS FROM https://journals.iucr.org/services/cif/reqditems.html
-
+        _pdbAtomsAttribute = []
         def split_loop_line(line, n):
             splitted = []
             s = None
@@ -174,9 +176,9 @@ class CrystalMaker(object):
                 #cifLines = [l for l in cifLines if not l.startswith('#') and len(l)]
             attributes = []
             loopBlocks = []
-            loopData = []
+            loopData   = []
             loopHeader = []
-            loopBuild = -1
+            loopBuild  = -1
             for lidx, l in enumerate(cifLines):
                 if not len(l):
                     loopBuild = -1
@@ -188,6 +190,13 @@ class CrystalMaker(object):
                         loopData = []
                     continue
                 if l.startswith('#'):
+                    if l.startswith("# pdb atoms attribute: "):
+                        try:
+                            _d = dict( ast.literal_eval( l[len("# pdb atoms attribute: "):] ) )
+                        except:
+                            print("WARN: Unable to parse 'pdb atoms attribute: ' line")
+                        else:
+                            _pdbAtomsAttribute.append(_d)
                     continue
                 if l == 'loop_':
                     if len(loopData):
@@ -315,8 +324,10 @@ class CrystalMaker(object):
                     break
         assert symOps is not None, "space group symmetry not found"
         # instanciate builder
-        builder = cls(symOps=symOps, atoms=atoms, unitcellBC=[
-                      A, B, C, ALPHA, BETA, GAMMA], _precision=_precision, _distance=_distance, _uniqueNames=_uniqueNames)
+        builder = cls(symOps=symOps, atoms=atoms,
+                      unitcellBC=[A, B, C, ALPHA, BETA, GAMMA],
+                      _precision=_precision, _distance=_distance,
+                      _uniqueNames=_uniqueNames, _pdbAtomsAttribute=_pdbAtomsAttribute)
         # return
         return builder
 
@@ -378,6 +389,7 @@ class CrystalMaker(object):
                 'occupancy': copy.deepcopy(self.__unitcellOccupancy),
                 'sequences': copy.deepcopy(self.__unitcellSequences),
                 'segments': copy.deepcopy(self.__unitcellSegments),
+                'residues': copy.deepcopy(self.__unitcellResidues),
                 'boxCoords': self.__unitcellBoxCoords,
                 'sitesSymmetry':copy.deepcopy(self.__sitesSymmetry),
                 'a': self.__unitcellBC.get_a(),
@@ -398,6 +410,7 @@ class CrystalMaker(object):
                 'occupancy': self.__supercellOccupancy,
                 'sequences': self.__supercellSequences,
                 'segments': self.__supercellSegments,
+                'residues':self.__supercellResidues,
                 'boxCoords': self.__supercellBoxCoords,
                 'a': self.__supercellBC.get_a(),
                 'b': self.__supercellBC.get_b(),
@@ -482,7 +495,7 @@ class CrystalMaker(object):
             newAtoms.append(tuple(item))
         return newAtoms
 
-    def __build_unit_cell(self, _precision=None, _distance=0.5, _uniqueNames=False):
+    def __build_unit_cell(self, _precision=None, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
         ## build atoms name lut and ordered position lut
         posLUT   = OrderedDict()
         namesLUT = {}
@@ -571,6 +584,25 @@ class CrystalMaker(object):
         self.__unitcellOccupancy = occupancy
         self.__unitcellSequences = sequences
         self.__unitcellSegments  = segments
+        self.__unitcellResidues  = ['CRY']*len(segments)
+        # add _pdbAtomsAttribute
+        if isinstance(_pdbAtomsAttribute, (list,tuple)):
+            for idx, atAttr in enumerate(_pdbAtomsAttribute):
+                try:
+                    atIdx = int(atAttr.get('atom_index', None))
+                    assert atIdx>=0
+                    assert atIdx<len(segments)
+                except Exception as err:
+                    print("WARN: Unable to parse pdb atoms attribute line '%s' (%s)"%(idx,err))
+                    continue
+                if 'atom_name' in atAttr:
+                    self.__unitcellNames[atIdx] = atAttr['atom_name']
+                if 'residue_name' in atAttr:
+                    self.__unitcellResidues[atIdx] = atAttr['residue_name']
+                if 'sequence_number' in atAttr:
+                    self.__unitcellSequences[atIdx] = atAttr['sequence_number']
+                if 'segment_identifier' in atAttr:
+                    self.__unitcellSegments[atIdx] = atAttr['segment_identifier']
 
     def set_unitcell_boundary_conditions(self, unitcellBC):
         """Set unitcell boundary conditions.
@@ -601,16 +633,17 @@ class CrystalMaker(object):
             assert len(unitcellBC), "PeriodicBoundaries unitcellBC is empty"
             BC = unitcellBC
         # reset supercell
-        self.__supercell = None
-        self.__supercellBC = None
+        self.__supercell          = None
+        self.__supercellBC        = None
         self.__supercellBoxCoords = None
-        self.__supercellElements = None
-        self.__supercellNames = None
+        self.__supercellElements  = None
+        self.__supercellNames     = None
+        self.__supercellResidues  = None
         self.__supercellSequences = None
-        self.__supercellSegments = None
+        self.__supercellSegments  = None
         self.__supercellOccupancy = None
-        self.__supercellRejected = None
-        self.__unitcells = None
+        self.__supercellRejected  = None
+        self.__unitcells          = None
         # set boundary conditions
         self.__unitcellBC = BC
 
@@ -621,6 +654,18 @@ class CrystalMaker(object):
             #. supercell (None, tuple): supercell dimension to create. If None
                then a supercell of the size of the unit cell will be created.
         """
+        def _get_init_seq(self):
+            try:
+                seqIdx    = np.array(self.__unitcellSequences, dtype=int)
+                seqIdxMax = max(seqIdx)
+                seqIdxInc = seqIdxMax+1
+            except:
+                seqIdx    = np.array([0]*ucl, dtype=int)
+                seqIdxMax = 0
+                seqIdxInc = 1
+            return seqIdx, seqIdxMax, seqIdxInc
+
+
         ## check supercell
         if supercell is None:
             supercell = (1, 1, 1)
@@ -635,11 +680,13 @@ class CrystalMaker(object):
         _names     = copy.deepcopy(self.__unitcellNames)
         _occupancy = copy.deepcopy(self.__unitcellOccupancy)
         _boxCoords = copy.deepcopy(self.__unitcellBoxCoords)
+        _residues  = copy.deepcopy(self.__unitcellResidues)
         for si, i in enumerate(supercell):
             if i <= 1:
                 continue
             coords = np.array(_boxCoords)
             els = [e for e in _elements]
+            rsd = [r for r in _residues]
             nms = [n for n in _names]
             ocp = [o for o in _occupancy]
             for j in range(1, supercell[si]):
@@ -647,22 +694,26 @@ class CrystalMaker(object):
                 v[si] = j
                 _boxCoords.extend([list(v) for v in coords+v])
                 _elements.extend(els)
+                _residues.extend(rsd)
                 _names.extend(nms)
                 _occupancy.extend(ocp)
         ## create segment and sequences and unitcells
         ucl = len(self.__unitcellSegments)
-        seqIdx = segIdx = 0
+        seqIdx, seqIdxMax, seqIdxInc = _get_init_seq(self=self)
+        segIdx     = 0
         _segments  = []
         _sequences = []
         _unitcells = []
         ucIndex    = 0
         while len(_segments) < len(_occupancy):
-            seqIdx += 1
-            if seqIdx > 9999:
-                seqIdx = 1
+            if seqIdxMax > 9999:
+                seqIdx, seqIdxMax, seqIdxInc = _get_init_seq(self=self)
                 segIdx += 1
             _segments.extend([str(segIdx)]*ucl)
-            _sequences.extend([seqIdx]*ucl)
+            #_sequences.extend([seqIdx]*ucl)
+            _sequences.extend(list(seqIdx))
+            seqIdx    += seqIdxInc
+            seqIdxMax += seqIdxInc
             _unitcells.extend([ucIndex]*ucl)
             ucIndex += 1
         ## adjust sites occupancy
@@ -671,6 +722,7 @@ class CrystalMaker(object):
         names     = []
         sequences = []
         segments  = []
+        residues  = []
         occupancy = []
         rejected  = []
         unitcells = []
@@ -708,6 +760,7 @@ class CrystalMaker(object):
             names.append(nm)
             sequences.append(_sequences[idx])
             segments.append(_segments[idx])
+            residues.append(_residues[idx])
             unitcells.append(_unitcells[idx])
             occupancy.append(oc)
         # get supercell boundary conditions
@@ -716,15 +769,16 @@ class CrystalMaker(object):
         z = supercell[2] * self.__unitcellBC.get_vectors()[2, :]
         BC = PeriodicBoundaries(params=[x, y, z])
         # set supercell parameters
-        self.__supercell = tuple(supercell)
-        self.__supercellBC = BC
+        self.__supercell          = tuple(supercell)
+        self.__supercellBC        = BC
         self.__supercellBoxCoords = np.array(boxCoords)
-        self.__supercellElements = elements
-        self.__supercellNames = names
+        self.__supercellElements  = elements
+        self.__supercellNames     = names
         self.__supercellSequences = sequences
-        self.__supercellSegments = segments
+        self.__supercellSegments  = segments
+        self.__supercellResidues  = residues
         self.__supercellOccupancy = occupancy
-        self.__supercellRejected = rejected
+        self.__supercellRejected  = rejected
         # build unitcells neighbours list
         ucLUT = dict([(i, [])
                      for i in range(supercell[0]*supercell[1]*supercell[2])])
@@ -864,17 +918,18 @@ class CrystalMaker(object):
         from pdbparser import pdbparser
         records = []
         rec = copy.copy(__ATOM__)
-        rec['residue_name'] = 'CRY'  # crystallographic unitcell
+        #rec['residue_name'] = 'CRY'  # crystallographic unitcell
         for idx, el in enumerate(self.__supercellElements):
             x, y, z = realCoords[idx, :]
             rec = copy.copy(rec)
-            rec['coordinates_x'] = x
-            rec['coordinates_y'] = y
-            rec['coordinates_z'] = z
-            rec['serial_number'] = idx+1
-            rec['element_symbol'] = el
-            rec['atom_name'] = self.__supercellNames[idx]
-            rec['sequence_number'] = self.__supercellSequences[idx]
+            rec['coordinates_x']      = x
+            rec['coordinates_y']      = y
+            rec['coordinates_z']      = z
+            rec['serial_number']      = idx+1
+            rec['element_symbol']     = el
+            rec['residue_name']       = self.__supercellResidues[idx]
+            rec['atom_name']          = self.__supercellNames[idx]
+            rec['sequence_number']    = self.__supercellSequences[idx]
             rec['segment_identifier'] = self.__supercellSegments[idx]
             records.append(rec)
         # create pdb

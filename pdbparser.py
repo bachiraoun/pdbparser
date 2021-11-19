@@ -1706,6 +1706,7 @@ class pdbparser(object):
                    indexes = None,\
                    coordinates=None,\
                    boundaryConditions=None,
+                   pdbAttributes=True,
                    _precision=6,
                    _log=True):
         """
@@ -1718,6 +1719,9 @@ class pdbparser(object):
                all atoms will be exported
             #. coordinates (None, np.ndarray): export pdb using different coordinates. If None, use pdb coordinates.
             #. boundaryConditions (None, PeriodicBoundaries): Export boundary conditions other than pdbparser instance ones.
+            #. pdbAttributes(boolean): whether to add pdb attributes
+               as lines of comments
+
 
         :Returns:
             #. cif (None, str): If outputPath is not None then None is returned
@@ -1729,7 +1733,8 @@ class pdbparser(object):
             pdbCopy.export_cif( outputPath=outputPath, \
                                 indexes=None,\
                                 boundaryConditions=boundaryConditions,
-                                _log=_log)
+                                pdbAttributes=pdbAttributes,
+                                _log=_log )
         else:
             # try to open file
             try:
@@ -1749,11 +1754,11 @@ class pdbparser(object):
             else:
                 coordinates = self.coordinates
             # write boundary conditions
-            bc=None
+            bc = None
             if boundaryConditions is None:
                 if hasattr(self, "_boundaryConditions"):
                     bc = self._boundaryConditions
-            assert isinstance(bc, PeriodicBoundaries),"boundaryConditions must be None or either InfiniteBoundaries and PeriodicBoundaries."
+            assert isinstance(bc, PeriodicBoundaries),"boundaryConditions must be None or PeriodicBoundaries."
             # get boundary conditions
             a      = bc.get_a()
             b      = bc.get_b()
@@ -1762,8 +1767,18 @@ class pdbparser(object):
             beta   = bc.get_beta()*180/np.pi
             gamma  = bc.get_gamma()*180/np.pi
             coords = bc.real_to_box_array(self.coordinates)
+            # pdbAttributes
+            _desc = ""
+            if pdbAttributes:
+                atLine = "\n# pdb atoms attribute: [('atom_index',{atidx}), ('atom_name','{atname}'), ('residue_name','{resname}'), ('sequence_number',{seqnum}), ('segment_identifier','{segid}')]"
+                for idx, rec in enumerate(self.records):
+                    _desc += atLine.format(atidx   = idx,
+                                           atname  = rec['atom_name'],
+                                           resname = rec['residue_name'],
+                                           seqnum  = rec['sequence_number'],
+                                           segid   = rec['segment_identifier'],)
             # start creating cif file
-            header = """# This file is generated using pdbparser package
+            header = """# This file is generated using pdbparser package{_desc}
 
 _cell_length_a                  {a:.4f}(0)
 _cell_length_b                  {b:.4f}(0)
@@ -1784,7 +1799,7 @@ _atom_site_type_symbol
 _atom_site_occupancy
 _atom_site_fract_x
 _atom_site_fract_y
-_atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma)
+_atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma,_desc=_desc)
             fd.write(header)
             # add atoms
             atLine = "\n{name} {element} 1.0000     {x:.%sf}     {y:.%sf}     {z:.%sf}"%(_precision,_precision,_precision)
