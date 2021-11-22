@@ -67,7 +67,7 @@ class CrystalMaker(object):
 
     """
 
-    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
+    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _checkPosition=True, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
         self.__unitcellBC = self.__supercellBC = None
         self.__translations = ((1, -1, -1), (1, -1, 0), (1, -1, 1),
                                (1,  0, -1), (1,  0, 0), (1,  0, 1),
@@ -85,6 +85,7 @@ class CrystalMaker(object):
         self.__atoms = self.__get_atoms_definition(atoms)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
         self.__build_unit_cell(_precision=_precision,
+                               _checkPosition=_checkPosition,
                                _distance=_distance,
                                _uniqueNames=_uniqueNames,
                                _pdbAtomsAttribute=_pdbAtomsAttribute)
@@ -403,6 +404,21 @@ class CrystalMaker(object):
                 'z': self.__unitcellBC.get_vectors()[2, :]}
 
     @property
+    def atomSites(self):
+        """Sites list"""
+        return self.__atoms
+
+    @property
+    def unitcellBoundaryConditions(self):
+        """Unitcell boundary conditions"""
+        return self.__unitcellBC
+
+    @property
+    def symmetryOperations(self):
+        """Symmetry operations"""
+        return self.__symOps
+
+    @property
     def supercellAttributes(self):
         """get supercell atoms attributes dictionary"""
         return {'elements': self.__supercellElements,
@@ -495,7 +511,7 @@ class CrystalMaker(object):
             newAtoms.append(tuple(item))
         return newAtoms
 
-    def __build_unit_cell(self, _precision=None, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
+    def __build_unit_cell(self, _precision=None, _checkPosition=True, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
         ## build atoms name lut and ordered position lut
         posLUT   = OrderedDict()
         namesLUT = {}
@@ -514,7 +530,7 @@ class CrystalMaker(object):
                     p = tuple([round(eval(i) % 1, _precision) for i in p])
                 else:
                     p = tuple([eval(i) % 1 for i in p])
-                if p in pos:
+                if p in pos and _checkPosition:
                     #print('stage 1 correction:', "%s is redundant given precisions %s"%(p, _precision))
                     continue
                 if len(bcd) and _distance is not None:
@@ -922,14 +938,14 @@ class CrystalMaker(object):
         for idx, el in enumerate(self.__supercellElements):
             x, y, z = realCoords[idx, :]
             rec = copy.copy(rec)
-            rec['coordinates_x']      = x
-            rec['coordinates_y']      = y
-            rec['coordinates_z']      = z
+            rec['coordinates_x']      = float(x)
+            rec['coordinates_y']      = float(y)
+            rec['coordinates_z']      = float(z)
             rec['serial_number']      = idx+1
             rec['element_symbol']     = el
             rec['residue_name']       = self.__supercellResidues[idx]
             rec['atom_name']          = self.__supercellNames[idx]
-            rec['sequence_number']    = self.__supercellSequences[idx]
+            rec['sequence_number']    = int(self.__supercellSequences[idx])
             rec['segment_identifier'] = self.__supercellSegments[idx]
             records.append(rec)
         # create pdb
