@@ -97,7 +97,7 @@ class CrystalMaker(object):
             return len(self.__supercellElements)
 
     @classmethod
-    def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False):
+    def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False, _readPdbAtomsAttribute=True):
         """Read cif file and instanciate a CrystalMaker instance.
         A valid cif file must contain all of the following
 
@@ -325,6 +325,8 @@ class CrystalMaker(object):
                     break
         assert symOps is not None, "space group symmetry not found"
         # instanciate builder
+        if not _readPdbAtomsAttribute:
+            _pdbAtomsAttribute = None
         builder = cls(symOps=symOps, atoms=atoms,
                       unitcellBC=[A, B, C, ALPHA, BETA, GAMMA],
                       _precision=_precision, _distance=_distance,
