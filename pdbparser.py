@@ -29,6 +29,7 @@ from .Utilities.Modify import *
 from .Utilities.Collection import *
 from .Utilities.Database import *
 from .Utilities.BoundaryConditions import InfiniteBoundaries, PeriodicBoundaries
+from .Utilities.Database import __avogadroNumber__
 
 # python version dependant imports
 if int(sys.version[0])>=3:
@@ -205,6 +206,7 @@ class pdbparser(object):
                                           }
         # boundary conditions
         self._boundaryConditions = InfiniteBoundaries()
+        self._density            = None
 
     def __getitem__(self, index):
         return self.records[index]
@@ -289,6 +291,10 @@ class pdbparser(object):
     def boundaryConditions(self):
         """ Get the boundary condition instance. """
         return self._boundaryConditions
+
+    @property
+    def density(self):
+        return self._density
 
     @property
     def simulationBox(self):
@@ -1038,6 +1044,7 @@ class pdbparser(object):
             alpha = float( 90.00 )
             beta  = float( 90.00 )
             gamma = float( 90.00 )
+            self._density = None
         else:
             vectors = self._boundaryConditions.get_vectors()
             angles  = self._boundaryConditions.get_angles()
@@ -1047,6 +1054,12 @@ class pdbparser(object):
             alpha = angles[0]*180/np.pi
             beta  = angles[1]*180/np.pi
             gamma = angles[2]*180/np.pi
+            # compute density
+            volume      = self._boundaryConditions.get_box_volume()
+            to_g_cm3    = 1e-24
+            molarWeight = np.sum(get_records_database_property_values(self.indexes, self, "atomicWeight"))
+            self._density = molarWeight/volume/to_g_cm3/__avogadroNumber__
+
         self.crystallographicStructure = { "record_name": "CRYST1" ,\
                                            "a"          : a ,\
                                            "b"          : b ,\
@@ -1503,11 +1516,11 @@ class pdbparser(object):
                         bc.set_vectors(bcVectors)
                         self.set_boundary_conditions(bc)
                 elif line.startswith('REMARK    HR_X -->'):
-                    HR_X.extend( [float(i) for i in l.split('REMARK    HR_X -->')[-1].split(',')] )
+                    HR_X.extend( [float(i) for i in line.split('REMARK    HR_X -->')[-1].split(',')] )
                 elif line.startswith('REMARK    HR_Y -->'):
-                    HR_Y.extend( [float(i) for i in l.split('REMARK    HR_Y -->')[-1].split(',')] )
+                    HR_Y.extend( [float(i) for i in line.split('REMARK    HR_Y -->')[-1].split(',')] )
                 elif line.startswith('REMARK    HR_Z -->'):
-                    HR_Z.extend( [float(i) for i in l.split('REMARK    HR_Z -->')[-1].split(',')] )
+                    HR_Z.extend( [float(i) for i in line.split('REMARK    HR_Z -->')[-1].split(',')] )
                 else:
                     self.headings.append(line)
             else:

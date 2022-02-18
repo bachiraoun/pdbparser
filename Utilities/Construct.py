@@ -262,28 +262,28 @@ class Construct(object):
         densityPriority = self.priorities.get("density", True)
 
         # water density in g/A3 is 1e-24
-        waterDensity = 1e-24
+        to_g_cm3 = 1e-24
 
         if boxSizePriority and densityPriority and not insertionNumberPriority:
             # get insertion number of all pdbs
-            self.insertionNumber = (self.density*waterDensity*np.prod(self.boxSize)*__avogadroNumber__)/(np.array(self.pdbsMolarWeight))
+            self.insertionNumber = (self.density*to_g_cm3*np.prod(self.boxSize)*__avogadroNumber__)/(np.array(self.pdbsMolarWeight))
             self.insertionNumber = np.array(self.insertionNumber/len(self.pdbs)).astype(int)
-            self.density = np.sum(np.array(self.insertionNumber)*np.array(self.pdbsMolarWeight))/np.prod(self.boxSize)/waterDensity/__avogadroNumber__
+            self.density = np.sum(np.array(self.insertionNumber)*np.array(self.pdbsMolarWeight))/np.prod(self.boxSize)/to_g_cm3/__avogadroNumber__
             #Logger.info("Box size is %r"%(self.boxSize))
         elif insertionNumberPriority and densityPriority and not boxSizePriority:
             totalMass = float( np.sum(np.array(self.insertionNumber)*np.array(self.pdbsMolarWeight)) )
-            cubicBoxSideLength = (totalMass/waterDensity/__avogadroNumber__/self.density)**(1/3.)
+            cubicBoxSideLength = (totalMass/to_g_cm3/__avogadroNumber__/self.density)**(1/3.)
             self.boxSize = np.array([cubicBoxSideLength,cubicBoxSideLength,cubicBoxSideLength])
             # update construction box
             self.constructionBox = PeriodicBoundaries()
             self.constructionBox.set_vectors(self.boxSize)
 
             #Logger.info("Cubic box side = %r calculated according to molecules number %r and number density %r"%(cubicBoxSideLength, self.insertionNumber, self.density))
-            self.density = totalMass/np.prod(self.boxSize)/waterDensity/__avogadroNumber__
+            self.density = totalMass/np.prod(self.boxSize)/to_g_cm3/__avogadroNumber__
 
         elif boxSizePriority and insertionNumberPriority and not densityPriority:
             #Logger.info("building system with box size %r and number of molecules %r regardless density set to %r"%(self.boxSize, self.insertionNumber, self.density))
-            self.density = np.sum(np.array(self.insertionNumber)*np.array(self.pdbsMolarWeight))/np.prod(self.boxSize)/waterDensity/__avogadroNumber__
+            self.density = np.sum(np.array(self.insertionNumber)*np.array(self.pdbsMolarWeight))/np.prod(self.boxSize)/to_g_cm3/__avogadroNumber__
         else:
             Logger.error("Two of the three priorities %r must be set to True" %["boxSize","insertionNumber","density"])
             raise
