@@ -332,12 +332,12 @@ class PeriodicBoundaries(InfiniteBoundaries):
                    np.arccos(np.dot(normalizedVectors[0],normalizedVectors[1])) ]
         self._angles.insert(index, angles)
         # calculate directVolume
-        self._directVolume.insert(index, np.dot(directBasisVectors[0,:], np.cross(directBasisVectors[1,:],directBasisVectors[2,:]) ))
+        self._directVolume.insert(index, np.abs(np.dot(directBasisVectors[0,:], np.cross(directBasisVectors[1,:],directBasisVectors[2,:]))) )
         # calculate reciprocalBasisVectors
         reciprocalBasisVectors = np.linalg.inv(directBasisVectors)
         self._reciprocalBasisVectors.insert(index, reciprocalBasisVectors)
         # calculate reciprocalVolume
-        self._reciprocalVolume.insert(index, np.dot( reciprocalBasisVectors[0,:], np.cross(reciprocalBasisVectors[1,:],reciprocalBasisVectors[2,:]) ))
+        self._reciprocalVolume.insert(index, np.abs(np.dot(reciprocalBasisVectors[0,:], np.cross(reciprocalBasisVectors[1,:],reciprocalBasisVectors[2,:]))) )
 
     def set_vectors_using_abc_alpha_beta_gamma(self,a,b,c,alpha,beta,gamma, index=None):
         """
