@@ -1034,7 +1034,10 @@ class pdbparser(object):
         :Parameters:
             #. bc (InfiniteBoundaries, PeriodicBoundaries): the boundary conditions instance
         """
-        assert isinstance(bc, (InfiniteBoundaries, PeriodicBoundaries)), "bc must be either InfiniteBoundaries or PeriodicBoundaries instance"
+        if bc is None:
+            bc = InfiniteBoundaries()
+        else:
+            assert isinstance(bc, (InfiniteBoundaries, PeriodicBoundaries)), "bc must be either None, InfiniteBoundaries or PeriodicBoundaries instance"
         self._boundaryConditions = bc
         # update crystallographicStructure
         if not isinstance(self._boundaryConditions, PeriodicBoundaries):
