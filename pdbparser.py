@@ -207,6 +207,7 @@ class pdbparser(object):
         # boundary conditions
         self._boundaryConditions = InfiniteBoundaries()
         self._density            = None
+        self._numberDensity      = None
 
     def __getitem__(self, index):
         return self.records[index]
@@ -295,6 +296,10 @@ class pdbparser(object):
     @property
     def density(self):
         return self._density
+
+    @property
+    def numberDensity(self):
+        return self._numberDensity
 
     @property
     def simulationBox(self):
@@ -1047,7 +1052,8 @@ class pdbparser(object):
             alpha = float( 90.00 )
             beta  = float( 90.00 )
             gamma = float( 90.00 )
-            self._density = None
+            self._density       = None
+            self._numberDensity = None
         else:
             vectors = self._boundaryConditions.get_vectors()
             angles  = self._boundaryConditions.get_angles()
@@ -1058,11 +1064,11 @@ class pdbparser(object):
             beta  = angles[1]*180/np.pi
             gamma = angles[2]*180/np.pi
             # compute density
-            volume      = self._boundaryConditions.get_box_volume()
+            volume      = float(self._boundaryConditions.get_box_volume())
             to_g_cm3    = 1e-24
             molarWeight = np.sum(get_records_database_property_values(self.indexes, self, "atomicWeight"))
-            self._density = molarWeight/volume/to_g_cm3/__avogadroNumber__
-
+            self._density       = molarWeight/volume/to_g_cm3/__avogadroNumber__
+            self._numberDensity = float(len(self.records))/float(volume)
         self.crystallographicStructure = { "record_name": "CRYST1" ,\
                                            "a"          : a ,\
                                            "b"          : b ,\
