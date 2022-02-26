@@ -864,7 +864,7 @@ class pdbparser(object):
                     continue
                 if 'REMARK    this file is generated using %r package' %self.__class__.__name__ in line:
                     continue
-                fd.write(line)
+                fd.write("%s\n"%line)
         # write additional remarks
         if additionalRemarks is not None:
             if isinstance(additionalRemarks, str):
