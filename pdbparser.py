@@ -1505,11 +1505,14 @@ class pdbparser(object):
         HR_X  = []
         HR_Y  = []
         HR_Z  = []
+        _bc   = None
         for line in fd:
             index += 1
             if line[0:6].strip() not in self.__RECORD_NAMES__:
                 # headings
                 if line.startswith("REMARK    Boundary Conditions: "):
+                    if _bc is not None:
+                        Logger.warn("Ignoring redundant boundary Conditions definition in pdb file")
                     bcVectors = line.split("REMARK    Boundary Conditions: ")[1].strip().split()
                     if not len(bcVectors)==9:
                         Logger.warn("Wrong boundary conditions line '%s' format found. Line ignored"%line)
@@ -1521,9 +1524,8 @@ class pdbparser(object):
                         Logger.warn("Wrong boundary conditions line '%s' format found. Line ignored"%line)
                         self.headings.append(line)
                     else:
-                        bc = PeriodicBoundaries()
-                        bc.set_vectors(bcVectors)
-                        self.set_boundary_conditions(bc)
+                        _bc = PeriodicBoundaries()
+                        _bc.set_vectors(bcVectors)
                 elif line.startswith('REMARK    HR_X -->'):
                     HR_X.extend( [float(i) for i in line.split('REMARK    HR_X -->')[-1].split(',')] )
                 elif line.startswith('REMARK    HR_Y -->'):
@@ -1545,6 +1547,8 @@ class pdbparser(object):
                         r["coordinates_x"] = HR_X[i]
                         r["coordinates_y"] = HR_Y[i]
                         r["coordinates_z"] = HR_Z[i]
+        # set boudnary conditions
+        self.set_boundary_conditions(_bc)
         # close file
         if not isinstance(filePath, (list, tuple)):
             fd.close()
