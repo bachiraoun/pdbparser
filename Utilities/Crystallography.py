@@ -96,6 +96,22 @@ class CrystalMaker(object):
         else:
             return len(self.__supercellElements)
 
+    @property
+    def unitcellNumberOfAtoms(self):
+        return len(self.__unitcellElements)
+
+    @property
+    def unitcellAllElements(self):
+        return copy.deepcopy(self.__unitcellElements)
+
+    @property
+    def unitcellElements(self):
+        return sorted(set(self.__unitcellElements))
+
+    @property
+    def unitcellAllNames(self):
+        return sorted(set(self.__unitcellNames))
+
     @classmethod
     def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False, _readPdbAtomsAttribute=True):
         """Read cif file and instanciate a CrystalMaker instance.
