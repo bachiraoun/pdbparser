@@ -441,6 +441,7 @@ class CrystalMaker(object):
         """get supercell atoms attributes dictionary"""
         return {'elements': self.__supercellElements,
                 'names': self.__supercellNames,
+                'unitcellIndex':self.__supercellUnitcell,
                 'occupancy': self.__supercellOccupancy,
                 'sequences': self.__supercellSequences,
                 'segments': self.__supercellSegments,
@@ -672,6 +673,7 @@ class CrystalMaker(object):
         self.__supercellBoxCoords = None
         self.__supercellElements  = None
         self.__supercellNames     = None
+        self.__supercellUnitcell  = None
         self.__supercellResidues  = None
         self.__supercellSequences = None
         self.__supercellSegments  = None
@@ -808,6 +810,7 @@ class CrystalMaker(object):
         self.__supercellBoxCoords = np.array(boxCoords)
         self.__supercellElements  = elements
         self.__supercellNames     = names
+        self.__supercellUnitcell  = np.array(unitcells, dtype=int)
         self.__supercellSequences = sequences
         self.__supercellSegments  = segments
         self.__supercellResidues  = residues

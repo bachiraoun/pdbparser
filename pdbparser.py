@@ -1901,7 +1901,7 @@ _atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma,_desc
         :Returns:
             #. pdbCopy (pdbparser): The copied pdb instance.
         """
-        if indexes == None:
+        if indexes is None:
             indexes = self.indexes
         # get deep copy
         pdbCopy = copy.deepcopy(self)
