@@ -1844,7 +1844,7 @@ _atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma,_desc
                 fileName = "'In-memory file'"
             fd.close()
             if _log:
-                Logger.info( "All xyz records successfully exported to {fileName}".format(fileName=fileName))
+                Logger.info( "All cif records successfully exported to {fileName}".format(fileName=fileName))
         # return cif lines
         return cifContent
 
