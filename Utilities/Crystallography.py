@@ -12,6 +12,7 @@ if sys.version_info[0] >= 3:
 import numpy as np
 
 # pdbparser library imports
+from ..log import Logger
 from .Database import is_element, __ATOM__
 from .BoundaryConditions import PeriodicBoundaries
 
@@ -67,7 +68,7 @@ class CrystalMaker(object):
 
     """
 
-    def __init__(self, symOps, atoms, unitcellBC, _precision=None, _checkPosition=True, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
+    def __init__(self, symOps, atoms, unitcellBC, _allowOccupancy=True, _precision=None, _checkPosition=True, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
         self.__unitcellBC = self.__supercellBC = None
         self.__translations = ((1, -1, -1), (1, -1, 0), (1, -1, 1),
                                (1,  0, -1), (1,  0, 0), (1,  0, 1),
@@ -82,7 +83,7 @@ class CrystalMaker(object):
                                (-1,  1, -1), (-1,  1, 0), (-1,  1, 1),
                                )
         self.__symOps = self.__get_symmetry_operations(symOps)
-        self.__atoms = self.__get_atoms_definition(atoms)
+        self.__atoms = self.__get_atoms_definition(atoms, _allowOccupancy=_allowOccupancy)
         self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
         self.__build_unit_cell(_precision=_precision,
                                _checkPosition=_checkPosition,
@@ -113,7 +114,7 @@ class CrystalMaker(object):
         return sorted(set(self.__unitcellNames))
 
     @classmethod
-    def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False, _readPdbAtomsAttribute=True):
+    def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False, _readPdbAtomsAttribute=True, _allowOccupancy=True):
         """Read cif file and instanciate a CrystalMaker instance.
         A valid cif file must contain all of the following
 
@@ -346,6 +347,7 @@ class CrystalMaker(object):
         builder = cls(symOps=symOps, atoms=atoms,
                       unitcellBC=[A, B, C, ALPHA, BETA, GAMMA],
                       _precision=_precision, _distance=_distance,
+                      _allowOccupancy=_allowOccupancy,
                       _uniqueNames=_uniqueNames, _pdbAtomsAttribute=_pdbAtomsAttribute)
         # return
         return builder
@@ -493,40 +495,33 @@ class CrystalMaker(object):
             set(ops)), "symmetry operations redundancy is not allowed"
         return ops
 
-    def __get_atoms_definition(self, atoms):
+    def __get_atoms_definition(self, atoms, _allowOccupancy):
         ## check atoms
         assert isinstance(atoms, (list, set, tuple)), "atoms must be a list"
         assert len(atoms) >= 1, "atoms list must not be empty"
         newAtoms = []
         for idx, item in enumerate(atoms):
-            assert isinstance(
-                item, (list, tuple)), "atoms item must be a tuple. Item index %i is not" % idx
+            assert isinstance(item, (list, tuple)), "atoms item must be a tuple. Item index %i is not" % idx
+            item = list(item)
             if len(item) == 5:
                 if isinstance(item[1], str):
                     item = [item[0], item[1], item[2], item[3], item[4], 1.0]
                 else:
                     item = [item[0], None, item[1], item[2], item[3], item[4]]
-            assert len(
-                item) == 6, "atoms item tuple must have 5 or 6 items. Item index %i is not" % idx
-            assert isinstance(
-                item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not" % idx
-            assert 1 <= len(
-                item[0]) <= 2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not" % idx
-            assert is_element(
-                item[0]), "Given atom element '%s' is not found in database" % (item[0],)
-            assert not item[0].startswith(
-                "$"), "atoms item tuple first item (element) string must not start with '$'. Item index %i is not" % idx
-            assert item[1] is None or isinstance(
-                item[1], str), "atoms item tuple second item (name) must be None or a string. Item index %i is not" % idx
-            assert isinstance(
-                item[2], (int, float)), "atoms item tuple third item (x) must be a number. Item index %i is not" % idx
-            assert isinstance(
-                item[3], (int, float)), "atoms item tuple fourth item (y) must be a number. Item index %i is not" % idx
-            assert isinstance(
-                item[4], (int, float)), "atoms item tuple fifth item (z) must be a number. Item index %i is not" % idx
-            assert isinstance(
-                item[5], (int, float)), "atoms item tuple sixth item (occupancy) if given must be a number. Item index %i is not" % idx
+            assert len(item) == 6, "atoms item tuple must have 5 or 6 items. Item index %i is not" % idx
+            assert isinstance(item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not" % idx
+            assert 1 <= len(item[0]) <= 2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not" % idx
+            assert is_element(item[0]), "Given atom element '%s' is not found in database" % (item[0],)
+            assert not item[0].startswith("$"), "atoms item tuple first item (element) string must not start with '$'. Item index %i is not" % idx
+            assert item[1] is None or isinstance(item[1], str), "atoms item tuple second item (name) must be None or a string. Item index %i is not" % idx
+            assert isinstance(item[2], (int, float)), "atoms item tuple third item (x) must be a number. Item index %i is not" % idx
+            assert isinstance(item[3], (int, float)), "atoms item tuple fourth item (y) must be a number. Item index %i is not" % idx
+            assert isinstance(item[4], (int, float)), "atoms item tuple fifth item (z) must be a number. Item index %i is not" % idx
+            assert isinstance(item[5], (int, float)), "atoms item tuple sixth item (occupancy) if given must be a number. Item index %i is not" % idx
             assert 0 <= item[5] <= 1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not" % idx
+            if not _allowOccupancy and item[5]<1:
+                Logger.warn("Variable occupancy is not allowed. Occupancy for atom '{idx}' is adjusted from {o} to 1".format(idx=idx, o=item[5]))
+                item[5] = 1
             newAtoms.append(tuple(item))
         return newAtoms
 

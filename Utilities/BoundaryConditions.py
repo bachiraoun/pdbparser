@@ -19,6 +19,10 @@ from pdbparser.Utilities.Information import get_coordinates
 from pdbparser.Utilities.Geometry import get_min_max
 
 
+def are_close(a,b, _precision=1e-5):
+    return abs(a-b)<_precision
+
+
 class InfiniteBoundaries(object):
     """
     simulation box class for no boundary conditions universe.
@@ -149,6 +153,12 @@ class InfiniteBoundaries(object):
         For InfiniteBoundaries calling this method will raise an error.
         """
         raise Logger.error("Infinite universe 'gamma definition' is ambiguous")
+
+    def get_crystal_class(self, _precision=1e-5):
+        """
+        get crystal class from boundary conditions
+        """
+        raise Logger.error("Infinite universe 'get_crystal_class definition' is ambiguous")
 
     def get_reciprocal_vectors(self, index = -1):
         """
@@ -504,6 +514,85 @@ class PeriodicBoundaries(InfiniteBoundaries):
         if degrees:
             ang *= 180./np.pi
         return ang
+
+    def get_crystal_class(self, index=-1, _precision=1e-5):
+        """
+        Get crystal class from boundary conditions vectors.
+
+
+        :Parameters:
+            #. index (integer): the index of the vectors.
+
+        :Returns:
+            #. result (string): this can be any of the 7 crystal classes
+               'cubic', 'tetragonal', 'orthorhombic', 'hexagonal', 'trigonal'
+               'monoclinic' or 'triclinic'
+
+        """
+        # http://home.iitk.ac.in/~sangals/crystosim/crystaltut.html
+        a     = self.get_a(index=index)
+        b     = self.get_b(index=index)
+        c     = self.get_c(index=index)
+        alpha = self.get_alpha(index=index, degrees=True)
+        beta  = self.get_beta(index=index, degrees=True)
+        gamma = self.get_gamma(index=index, degrees=True)
+        # get glags
+        ab = ba  = are_close(a,b)
+        ac = ca  = are_close(a,c)
+        bc = cb  = are_close(b,c)
+        alpbet   = are_close(alpha,beta)
+        alpgam   = are_close(alpha,gamma)
+        betgam   = are_close(beta,gamma)
+        alpha90  = are_close(alpha,90)
+        beta90   = are_close(beta,90)
+        gamma90  = are_close(gamma,90)
+        alpha120 = are_close(alpha,120)
+        beta120  = are_close(beta,120)
+        gamma120 = are_close(gamma,120)
+        #####
+        if alpha90 and beta90 and gamma90:
+            ## cubic
+            if ab and bc and ac:
+                return 'cubic'
+            ## tetragonal
+            elif ab and not bc: #and not ac:
+                return 'tetragonal'
+            elif ac and not bc: #and not ab:
+                return 'tetragonal'
+            elif bc and not ab: #and not ac:
+                return 'tetragonal'
+            ##  orthorhombic
+            else:
+                return 'orthorhombic'
+        ## trigonal
+        elif ab and bc and ac:
+            if alpbet and alpgam and betgam and not gamma90:
+                 return 'trigonal'
+            else:
+                raise Exception("Crystal class classification. This error is not possible. code should never be here. There must be some floating problem. (vectors:{vectors},  a:{a}, b:{b}, c:{c},  alpha:{alpha}, beta:{beta}, gamma:{gamma}) PLEASE REPORT".format(vectors=boundaryConditions.get_vectors().tolist(), a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma ))
+        ## hexagonal
+        elif alpha90 and beta90 and gamma120:
+            return 'hexagonal'
+        elif alpha90 and beta120 and gamma90:
+            return 'hexagonal'
+        elif alpha120 and beta90 and gamma90:
+            return 'hexagonal'
+        ## monoclinic
+        elif not ab and not bc and not ac:
+            if alpha90 and beta90 and not gamma120:
+                return 'monoclinic'
+            elif alpha90 and gamma90 and not beta120:
+                return 'monoclinic'
+            elif gamma90 and gamma90 and not alpha120:
+                return 'monoclinic'
+            elif not alpha90 and not beta90 and not gamma90:
+                return 'triclinic'
+            else:
+                raise Exception("Crystal class classification. This error is not possible. code should never be here. There must be some floating problem. (vectors:{vectors},  a:{a}, b:{b}, c:{c},  alpha:{alpha}, beta:{beta}, gamma:{gamma}) PLEASE REPORT".format(vectors=boundaryConditions.get_vectors().tolist(), a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma ))
+        ## triclinic
+        else:
+            return 'triclinic'
+
 
     def get_box_volume(self, index = -1):
         """
