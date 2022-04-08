@@ -403,6 +403,64 @@ class CrystalMaker(object):
         return equ
 
     @property
+    def cellShape(self):
+        """get crystal class which can be 'cubic', 'tetragonal', 'orthorhombic',
+        'hexagonal', 'trigonal' 'monoclinic' or 'triclinic'"""
+        if self.__unitcellBC is None:
+            return None
+        return self.__unitcellBC.get_crystal_class(_raise=False)
+
+    @property
+    def crystalClass(self):
+        """alias to cellShape'"""
+        return self.cellShape
+
+    @property
+    def latticeSymbol(self):
+        """get crystal unitcell type that can be 'primitive',
+        'body-centered', 'face-centered' or 'side-centered' """
+        if self.__unitcellBoxCoords is None:
+            return None
+        trans    = [[1,0,0],[0,1,0],[0,0,1],
+                    [1,1,0],[1,0,1],[0,1,1],
+                    [1,1,1]]
+        bcoords  = self.__unitcellBC.fold_box_array(self.__unitcellBoxCoords)
+        _coords  = bcoords.tolist()
+        _        = [_coords.extend((bcoords+t).tolist()) for t in trans]
+        bcoords  = np.array(_coords)
+        close0p5 = [tuple(item) for item in  (np.isclose(bcoords-0.5, 0) | np.isclose(bcoords-1.5, 0)).tolist()]
+        lut0p5   = {}
+        _        = [lut0p5.setdefault(k,[]).append(i) for i,k in enumerate(close0p5)]
+        ## check body centered
+        if (True, True, True) in lut0p5:
+            return 'body-centered'
+        # look for faces
+        xyz      = np.isclose(bcoords, 0)
+        closex0  = xyz[:,0]
+        closey0  = xyz[:,1]
+        closez0  = xyz[:,2]
+        xyz      = np.isclose(bcoords, 1)
+        closex1  = xyz[:,0]
+        closey1  = xyz[:,1]
+        closez1  = xyz[:,2]
+        ## face centered
+        x01 = sum(closex0[lut0p5.get((False, True, True), [])]) + sum(closex1[lut0p5.get((False, True, True), [])])
+        y01 = sum(closey0[lut0p5.get((True, False, True), [])]) + sum(closey1[lut0p5.get((True, False, True), [])])
+        z01 = sum(closez0[lut0p5.get((True, True, False), [])]) + sum(closez1[lut0p5.get((True, True, False), [])])
+        if x01>=2 and y01>=2 and z01>=2:
+            return 'face-centered'
+        elif x01>=2 or y01>=2 or z01>=2:
+            return 'side-centered'
+        else:
+            return 'primitive'
+
+
+    @property
+    def bravaisLattice(self):
+        """tuple (crystal class, lattice symbol)"""
+        return self.cellShape, self.latticeSymbol
+
+    @property
     def unitcellAttributes(self):
         """get unitcell atoms attributes dictionary"""
         return {'elements': copy.deepcopy(self.__unitcellElements),
@@ -500,6 +558,7 @@ class CrystalMaker(object):
         assert isinstance(atoms, (list, set, tuple)), "atoms must be a list"
         assert len(atoms) >= 1, "atoms list must not be empty"
         newAtoms = []
+        voIdx    = [] # to store atoms where occupancy was automatically altered to 1
         for idx, item in enumerate(atoms):
             assert isinstance(item, (list, tuple)), "atoms item must be a tuple. Item index %i is not" % idx
             item = list(item)
@@ -520,9 +579,11 @@ class CrystalMaker(object):
             assert isinstance(item[5], (int, float)), "atoms item tuple sixth item (occupancy) if given must be a number. Item index %i is not" % idx
             assert 0 <= item[5] <= 1, "atoms item tuple fifth item (occupancy) if given must be a >=0 and <=1. Item index %i is not" % idx
             if not _allowOccupancy and item[5]<1:
-                Logger.warn("Variable occupancy is not allowed. Occupancy for atom '{idx}' is adjusted from {o} to 1".format(idx=idx, o=item[5]))
+                voIdx.append((idx,item[5]))
                 item[5] = 1
             newAtoms.append(tuple(item))
+        if len(voIdx):
+            Logger.warn("{klass} Variable occupancy flag '_allowOccupancy' is set to False. Occupancy for (atom index, occupancy) {voIdx} is automatically adjusted to 1".format(klass=self.__class__.__name__, voIdx=voIdx,))
         return newAtoms
 
     def __build_unit_cell(self, _precision=None, _checkPosition=True, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):

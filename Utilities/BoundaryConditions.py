@@ -154,11 +154,15 @@ class InfiniteBoundaries(object):
         """
         raise Logger.error("Infinite universe 'gamma definition' is ambiguous")
 
-    def get_crystal_class(self, _precision=1e-5):
+    def get_cell_shape(self, _precision=1e-5):
         """
-        get crystal class from boundary conditions
+        get cell shape also known as crystal class from boundary conditions
         """
-        raise Logger.error("Infinite universe 'get_crystal_class definition' is ambiguous")
+        raise Logger.error("Infinite universe 'get_cell_shape definition' is ambiguous")
+
+    def get_crystal_class(self, *args, **kwargs):
+        """alias to get_cell_shape"""
+        return self.get_cell_shape(*args, **kwargs)
 
     def get_reciprocal_vectors(self, index = -1):
         """
@@ -515,9 +519,9 @@ class PeriodicBoundaries(InfiniteBoundaries):
             ang *= 180./np.pi
         return ang
 
-    def get_crystal_class(self, index=-1, _precision=1e-5):
+    def get_cell_shape(self, index=-1, _precision=1e-5, _raise=True):
         """
-        Get crystal class from boundary conditions vectors.
+        get cell shape also known as crystal class from boundary conditions
 
 
         :Parameters:
@@ -527,7 +531,6 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. result (string): this can be any of the 7 crystal classes
                'cubic', 'tetragonal', 'orthorhombic', 'hexagonal', 'trigonal'
                'monoclinic' or 'triclinic'
-
         """
         # http://home.iitk.ac.in/~sangals/crystosim/crystaltut.html
         a     = self.get_a(index=index)
@@ -569,7 +572,10 @@ class PeriodicBoundaries(InfiniteBoundaries):
             if alpbet and alpgam and betgam and not gamma90:
                  return 'trigonal'
             else:
-                raise Exception("Crystal class classification. This error is not possible. code should never be here. There must be some floating problem. (vectors:{vectors},  a:{a}, b:{b}, c:{c},  alpha:{alpha}, beta:{beta}, gamma:{gamma}) PLEASE REPORT".format(vectors=boundaryConditions.get_vectors().tolist(), a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma ))
+                m = "Crystal class classification. This error is not possible, code exectution should never be here. There must be some floating problem. (vectors:{vectors},  a:{a}, b:{b}, c:{c},  alpha:{alpha}, beta:{beta}, gamma:{gamma}) PLEASE REPORT".format(vectors=boundaryConditions.get_vectors().tolist(), a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma )
+                assert not _raise, pdbparser.Logger.error(m)
+                pdbparser.Logger.warn(m)
+                return 'triclinic'
         ## hexagonal
         elif alpha90 and beta90 and gamma120:
             return 'hexagonal'
@@ -588,7 +594,10 @@ class PeriodicBoundaries(InfiniteBoundaries):
             elif not alpha90 and not beta90 and not gamma90:
                 return 'triclinic'
             else:
-                raise Exception("Crystal class classification. This error is not possible. code should never be here. There must be some floating problem. (vectors:{vectors},  a:{a}, b:{b}, c:{c},  alpha:{alpha}, beta:{beta}, gamma:{gamma}) PLEASE REPORT".format(vectors=boundaryConditions.get_vectors().tolist(), a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma ))
+                m = "Crystal class classification. This error is not possible, code exectution should never be here. There must be some floating problem. (vectors:{vectors},  a:{a}, b:{b}, c:{c},  alpha:{alpha}, beta:{beta}, gamma:{gamma}) PLEASE REPORT".format(vectors=boundaryConditions.get_vectors().tolist(), a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma )
+                assert not _raise, pdbparser.Logger.error(m)
+                pdbparser.Logger.warn(m)
+                return 'triclinic'
         ## triclinic
         else:
             return 'triclinic'
