@@ -424,7 +424,7 @@ class CrystalMaker(object):
         trans    = [[1,0,0],[0,1,0],[0,0,1],
                     [1,1,0],[1,0,1],[0,1,1],
                     [1,1,1]]
-        bcoords  = self.__unitcellBC.fold_box_array(self.__unitcellBoxCoords)
+        bcoords  = self.__unitcellBC.fold_box_array(np.array(self.__unitcellBoxCoords))
         _coords  = bcoords.tolist()
         _        = [_coords.extend((bcoords+t).tolist()) for t in trans]
         bcoords  = np.array(_coords)
@@ -432,8 +432,10 @@ class CrystalMaker(object):
         lut0p5   = {}
         _        = [lut0p5.setdefault(k,[]).append(i) for i,k in enumerate(close0p5)]
         ## check body centered
+        symbol = []
         if (True, True, True) in lut0p5:
-            return 'body-centered'
+            #return 'body-centered'
+            symbol.append('body')
         # look for faces
         xyz      = np.isclose(bcoords, 0)
         closex0  = xyz[:,0]
@@ -448,17 +450,24 @@ class CrystalMaker(object):
         y01 = sum(closey0[lut0p5.get((True, False, True), [])]) + sum(closey1[lut0p5.get((True, False, True), [])])
         z01 = sum(closez0[lut0p5.get((True, True, False), [])]) + sum(closez1[lut0p5.get((True, True, False), [])])
         if x01>=2 and y01>=2 and z01>=2:
-            return 'face-centered'
+            #return 'face-centered'
+            #face = True
+            symbol.append('face')
         elif x01>=2 or y01>=2 or z01>=2:
-            return 'side-centered'
-        else:
+            #return 'side-centered'
+            symbol.append('side')
+        #else:
+        #    return 'primitive'
+        if not len(symbol):
             return 'primitive'
+        else:
+            return '-'.join(symbol) + '-centered'
 
 
     @property
     def bravaisLattice(self):
-        """tuple (crystal class, lattice symbol)"""
-        return self.cellShape, self.latticeSymbol
+        """tuple (lattice symbol, crystal class)"""
+        return self.latticeSymbol, self.cellShape
 
     @property
     def unitcellAttributes(self):
