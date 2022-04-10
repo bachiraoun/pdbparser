@@ -1475,7 +1475,7 @@ class pdbparser(object):
         """
         self.models = {}
 
-    def read_pdb(self, filePath):
+    def read_pdb(self, filePath, _assertLen=True, _log=True):
         """
         Reads and parses the pdb file and save all its records and informations. \n
 
@@ -1494,8 +1494,10 @@ class pdbparser(object):
             try:
                 fd = open(filePath, 'r')
             except:
-                Logger.error("cannot open file %s" %filePath)
-                raise
+                m = "cannot open file %s" %filePath
+                if _log:
+                    Logger.error(m)
+                raise Exception( m )
             else:
                 self.filePath = filePath
                 self.__name = os.path.basename(STR(filePath)).split('.')[0]
@@ -1512,16 +1514,19 @@ class pdbparser(object):
                 # headings
                 if line.startswith("REMARK    Boundary Conditions: "):
                     if _bc is not None:
-                        Logger.warn("Ignoring redundant boundary Conditions definition in pdb file")
+                        if _log:
+                            Logger.warn("Ignoring redundant boundary Conditions definition in pdb file")
                     bcVectors = line.split("REMARK    Boundary Conditions: ")[1].strip().split()
                     if not len(bcVectors)==9:
-                        Logger.warn("Wrong boundary conditions line '%s' format found. Line ignored"%line)
+                        if _log:
+                            Logger.warn("Wrong boundary conditions line '%s' format found. Line ignored"%line)
                         self.headings.append(line)
                     try:
                         bcVectors = [float(item) for item in bcVectors]
                         bcVectors = np.array(bcVectors)
                     except:
-                        Logger.warn("Wrong boundary conditions line '%s' format found. Line ignored"%line)
+                        if _log:
+                            Logger.warn("Wrong boundary conditions line '%s' format found. Line ignored"%line)
                         self.headings.append(line)
                     else:
                         _bc = PeriodicBoundaries()
@@ -1541,7 +1546,8 @@ class pdbparser(object):
         if len(HR_X)==len(HR_Y)==len(HR_Z):
             if len(HR_X)!=0:
                 if len(HR_X) != len(self.records):
-                    Logger.warn("High resolution coordinates length not matching pdb.")
+                    if _log:
+                        Logger.warn("High resolution coordinates length not matching pdb.")
                 else:
                     for i,r in enumerate(self.records):
                         r["coordinates_x"] = HR_X[i]
@@ -1552,6 +1558,14 @@ class pdbparser(object):
         # close file
         if not isinstance(filePath, (list, tuple)):
             fd.close()
+        # check length
+        if _assertLen:
+            if not len(self.records):
+                m = "no pdb records found in '%s'" %filePath
+                if _log:
+                    Logger.error(m)
+                raise Exception(m)
+
 
     def export_pdb(self, outputPath ,\
                    indexes = None,\
