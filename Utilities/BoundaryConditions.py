@@ -50,6 +50,7 @@ class InfiniteBoundaries(object):
         """ Get directBasisVectors list."""
         return self._directBasisVectors
 
+
     def set_vectors(self, vectorsArray = None, index = None):
         """
         Creates new box parameters at time index.
@@ -97,6 +98,12 @@ class InfiniteBoundaries(object):
         self._reciprocalBasisVectors.pop(index)
         self._directVolume.pop(index)
         self._reciprocalVolume.pop(index)
+
+    def get_maximum_length(self, index=-1):
+        """ Maximum length that a structure can get to before running
+        into periodic boundary conditions atomic images
+        """
+        raise Logger.error("Infinite universe 'maximum length' is ambiguous")
 
     def get_vectors(self, index = -1):
         """
@@ -422,6 +429,27 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. vectors (numpy.ndarray): the real box volume of shape (3,3)
         """
         return self._directBasisVectors[index]
+
+    def get_maximum_length(self, index=-1):
+        """ Maximum length that a structure can get to before running
+        into periodic boundary conditions atomic images
+
+        :Parameters:
+            #. index (integer): the index of the vectors.
+
+        :Returns:
+            #. length (number): maximum box length
+
+        """
+        lens  = []
+        a,b,c = self._directBasisVectors[index]
+        ts = np.linalg.norm(np.cross(a,b))/2
+        lens.extend( [ts/np.linalg.norm(a), ts/np.linalg.norm(b)] )
+        ts = np.linalg.norm(np.cross(b,c))/2
+        lens.extend( [ts/np.linalg.norm(b), ts/np.linalg.norm(c)] )
+        ts = np.linalg.norm(np.cross(a,c))/2
+        lens.extend( [ts/np.linalg.norm(a), ts/np.linalg.norm(c)] )
+        return min(lens)
 
     def get_a(self, index = -1):
         """
