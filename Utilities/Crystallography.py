@@ -363,6 +363,11 @@ class CrystalMaker(object):
         return self.__supercellBC
 
     @property
+    def boundaryConditions(self):
+        """alias to supercellBC"""
+        return self.supercellBC
+
+    @property
     def translations(self):
         """tuple of the 26 neighbours translations used to create
         every and each unitcell neighbours list. The order of the translations
