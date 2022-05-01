@@ -14,7 +14,7 @@ import numpy as np
 # pdbparser library imports
 import pdbparser
 from pdbparser.log import Logger
-from pdbparser.Utilities.Collection import get_lattice_vectors
+from pdbparser.Utilities.Collection import get_lattice_vectors, is_number
 from pdbparser.Utilities.Information import get_coordinates
 from pdbparser.Utilities.Geometry import get_min_max
 
@@ -101,9 +101,16 @@ class InfiniteBoundaries(object):
 
     def get_maximum_length(self, index=-1):
         """ Maximum length that a structure can get to before running
-        into periodic boundary conditions atomic images
+        into periodic boundary conditions atomic images.
+        For InfiniteBoundaries calling this method will raise an error.
         """
         raise Logger.error("Infinite universe 'maximum length' is ambiguous")
+
+    def get_minimum_needed_supercell(self, maxDist, index=-1):
+        """ Get needed supercell size to cover maxDist.
+        For InfiniteBoundaries calling this method will raise an error.
+        """
+        raise Logger.error("Infinite universe 'supercell' is ambiguous")
 
     def get_vectors(self, index = -1):
         """
@@ -275,7 +282,6 @@ class InfiniteBoundaries(object):
         return np.sqrt( np.add.reduce( difference**2, axis = 1) )
 
 
-
 class PeriodicBoundaries(InfiniteBoundaries):
     """
     stores box boundary conditions at different time indexes.
@@ -430,6 +436,16 @@ class PeriodicBoundaries(InfiniteBoundaries):
         """
         return self._directBasisVectors[index]
 
+    def _get_max_len(self, a,b,c):
+        lens  = []
+        ts = np.linalg.norm(np.cross(a,b))/2
+        lens.extend( [ts/np.linalg.norm(a), ts/np.linalg.norm(b)] )
+        ts = np.linalg.norm(np.cross(b,c))/2
+        lens.extend( [ts/np.linalg.norm(b), ts/np.linalg.norm(c)] )
+        ts = np.linalg.norm(np.cross(a,c))/2
+        lens.extend( [ts/np.linalg.norm(a), ts/np.linalg.norm(c)] )
+        return min(lens)
+
     def get_maximum_length(self, index=-1):
         """ Maximum length that a structure can get to before running
         into periodic boundary conditions atomic images
@@ -441,15 +457,80 @@ class PeriodicBoundaries(InfiniteBoundaries):
             #. length (number): maximum box length
 
         """
-        lens  = []
         a,b,c = self._directBasisVectors[index]
-        ts = np.linalg.norm(np.cross(a,b))/2
-        lens.extend( [ts/np.linalg.norm(a), ts/np.linalg.norm(b)] )
-        ts = np.linalg.norm(np.cross(b,c))/2
-        lens.extend( [ts/np.linalg.norm(b), ts/np.linalg.norm(c)] )
-        ts = np.linalg.norm(np.cross(a,c))/2
-        lens.extend( [ts/np.linalg.norm(a), ts/np.linalg.norm(c)] )
-        return min(lens)
+        return self._get_max_len(a=a,b=b,c=c)
+
+    def get_minimum_needed_supercell(self, maxDist, index=-1):
+        """Get needed supercell size to cover maxDist
+
+        :Parameters:
+            #. maxDist (number): If None, experimental data maximum R-range
+               will be used
+            #. index (integer): the index of the vectors.
+
+        :Returns:
+            #. supercell (list): supercell size along a, b, and c
+        """
+        assert is_number(maxDist), pdbparser.Logger("maxDist must be None or a number")
+        maxDist = float(maxDist)
+        assert maxDist>=0, pdbparser.Logger("maxDist must be >=0")
+        # unitcell vectors
+        unitcellBC = self._directBasisVectors[index].astype(float)
+        # initialize sa,sb, and sc
+        sa = max(1, int(2*maxDist/np.linalg.norm(unitcellBC[0,:])))
+        sb = max(1, int(2*maxDist/np.linalg.norm(unitcellBC[1,:])))
+        sc = max(1, int(2*maxDist/np.linalg.norm(unitcellBC[2,:])))
+        # compute initial da,db,dc
+        a = sa*unitcellBC[0,:]
+        b = sb*unitcellBC[1,:]
+        c = sc*unitcellBC[2,:]
+        maxLen = preda = predb = predc = self._get_max_len(a=a,b=b,c=c)
+        #print(sa,sb,sc, preda , predb , predc)
+        # run while loop
+        while maxLen<maxDist:
+            # compute for sa
+            a = (sa+1)*unitcellBC[0,:]
+            b = sb*unitcellBC[1,:]
+            c = sc*unitcellBC[2,:]
+            da  = self._get_max_len(a=a,b=b,c=c)
+            dda = da - preda
+            # compute for sb
+            a = a*unitcellBC[0,:]
+            b = (sb+1)*unitcellBC[1,:]
+            c = sc*unitcellBC[2,:]
+            db = self._get_max_len(a=a,b=b,c=c)
+            ddb = db - predb
+            # compute for sc
+            a = a*unitcellBC[0,:]
+            b = sb*unitcellBC[1,:]
+            c = (sc+1)*unitcellBC[2,:]
+            dc = self._get_max_len(a=a,b=b,c=c)
+            ddc = dc - predc
+            # fix floating errors
+            if are_close(dda,0):dda=0
+            if are_close(ddb,0):ddb=0
+            if are_close(ddc,0):ddc=0
+            # update sa, sb, and sc
+            if dda>0:
+                sa += 1
+            if ddb>0:
+                sb += 1
+            if ddc>0:
+                sc += 1
+            if dda==ddb==ddc==0:
+                sa += 1
+                sb += 1
+                sc += 1
+            # recompute maxLen
+            a = sa*unitcellBC[0,:]
+            b = sb*unitcellBC[1,:]
+            c = sc*unitcellBC[2,:]
+            maxLen = self._get_max_len(a=a,b=b,c=c)
+            #print(dda,ddb,ddc,' --> ', da,db,dc,' --> ',sa,sb,sc,' --> ', maxLen)
+        # return
+        return [sa,sb,sc]
+
+
 
     def get_a(self, index = -1):
         """
