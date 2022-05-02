@@ -530,8 +530,6 @@ class PeriodicBoundaries(InfiniteBoundaries):
         # return
         return [sa,sb,sc]
 
-
-
     def get_a(self, index = -1):
         """
         Get a the first vector length.
