@@ -192,6 +192,10 @@ __atoms_database__["pu"] = {'name':'Plutonium'      ,'symbol':'Pu'  ,'group':20 
 __atoms_database__["th"] = {'name':'Thorium'        ,'symbol':'Th'  ,'group':20  ,'atomicNumber':90   ,'vdwRadius':None  ,'neutronCohb':10.31            ,'neutronIncohb':0              ,'neutronCohXs':13.36    ,'neutronIncohXs':0       ,'atomicWeight':232.038  ,'covalentRadius':2.06  ,'equal':1.0  ,'atomicFormFactor':{0: {'a1': 35.5645, 'b4': 99.1722, 'a3': 12.7473, 'a2': 23.4219, 'a4': 4.80703, 'b2': 3.46204, 'b3': 17.8309, 'c': 13.4314, 'b1': 0.563359}, 4: {'a1': 35.1007, 'b4': 23.9533, 'a3': 9.78554, 'a2': 22.4418, 'a4': 5.29444, 'b2': 3.24498, 'b3': 13.4661, 'c': 13.376, 'b1': 0.555054}}}
 __atoms_database__["u"]  = {'name':'Uranium'        ,'symbol':'U'   ,'group':20  ,'atomicNumber':92   ,'vdwRadius':1.86  ,'neutronCohb':8.417            ,'neutronIncohb':None           ,'neutronCohXs':8.903    ,'neutronIncohXs':0.005   ,'atomicWeight':238.029  ,'covalentRadius':1.96  ,'equal':1.0  ,'atomicFormFactor':{0: {'a1': 36.0228, 'b4': 100.613, 'a3': 14.9491, 'a2': 23.4128, 'a4': 4.188, 'b2': 3.3253, 'b3': 16.0927, 'c': 13.3966, 'b1': 0.5293}, 3: {'a1': 35.5747, 'b4': 26.3394, 'a3': 12.2165, 'a2': 22.5259, 'a4': 5.37073, 'b2': 3.12293, 'b3': 12.7148, 'c': 13.3092, 'b1': 0.52048}, 4: {'a1': 35.3715, 'b4': 23.4582, 'a3': 12.0291, 'a2': 22.5326, 'a4': 4.7984, 'b2': 3.05053, 'b3': 12.5723, 'c': 13.2671, 'b1': 0.516598}, 6: {'a1': 34.8509, 'b4': 25.2017, 'a3': 14.0099, 'a2': 22.7584, 'a4': 1.21457, 'b2': 2.8903, 'b3': 13.1767, 'c': 13.1665, 'b1': 0.507079}}}
 
+# add upper cases and capitalized elements
+for el in list(__atoms_database__):
+    __atoms_database__[el.upper()] = __atoms_database__[el.capitalize()] = __atoms_database__[el]
+
 
 def export_database(database=None, databaseName='__atoms_database__',
                     props=('name','symbol','group','atomicNumber','vdwRadius','neutronCohb','neutronIncohb','neutronCohXs','neutronIncohXs','atomicWeight','covalentRadius', 'equal','atomicFormFactor'),

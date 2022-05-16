@@ -29,7 +29,7 @@ from .Utilities.Modify import *
 from .Utilities.Collection import *
 from .Utilities.Database import *
 from .Utilities.BoundaryConditions import InfiniteBoundaries, PeriodicBoundaries
-from .Utilities.Database import __avogadroNumber__
+from .Utilities.Database import __avogadroNumber__, __atoms_database__
 
 # python version dependant imports
 if int(sys.version[0])>=3:
@@ -174,7 +174,7 @@ class pdbparser(object):
         # return
         return dependencies, '\n'.join(code)
 
-    def __reset__(self):
+    def __reset__(self, checkElements=True, raiseReadingError=False):
         self.filePath=None
         self.__name = None
         self.records = []
@@ -208,6 +208,11 @@ class pdbparser(object):
         self._boundaryConditions = InfiniteBoundaries()
         self._density            = None
         self._numberDensity      = None
+        # checking flags
+        assert isinstance(checkElements, bool), "checkElements must be bool"
+        self._checkElements = checkElements
+        assert isinstance(raiseReadingError, bool), "raiseReadingError must be bool"
+        self._raiseReadingError = raiseReadingError
 
     def __getitem__(self, index):
         return self.records[index]
@@ -805,25 +810,30 @@ class pdbparser(object):
         ATOM    154  CG2BVAL A  25      29.909  16.996  55.922  0.72 13.25      A1   C
         """
         try:
-            self.records.append( { "record_name"       : STR( line[0:6] ).strip() ,\
-                                   "serial_number"     : INT( line[6:11] ) ,\
-                                   "atom_name"         : STR( line[12:16] ).strip() ,\
-                                   "location_indicator": STR( line[16] ).strip()  ,\
-                                   "residue_name"      : STR( line[17:20] ).strip()  ,\
-                                   "chain_identifier"  : STR( line[21] ).strip()  ,\
-                                   "sequence_number"   : INT( line[22:26] ) ,\
-                                   "code_of_insertion" : STR( line[26] ).strip()  ,\
-                                   "coordinates_x"     : FLOAT( line[30:38] ) ,\
-                                   "coordinates_y"     : FLOAT( line[38:46] ) ,\
-                                   "coordinates_z"     : FLOAT( line[46:54] ) ,\
-                                   "occupancy"         : FLOAT( line[54:60] ) ,\
-                                   "temperature_factor": FLOAT( line[60:66] ) ,\
-                                   "segment_identifier": STR( line[72:76] ).strip()  ,\
-                                   "element_symbol"    : STR( line[76:78] ).strip()  ,\
-                                   "charge"            : STR( line[78:80] ).strip()  ,\
-                                  } )
+            rec = { "record_name"       : STR( line[0:6] ).strip() ,\
+                    "serial_number"     : INT( line[6:11] ) ,\
+                    "atom_name"         : STR( line[12:16] ).strip() ,\
+                    "location_indicator": STR( line[16] ).strip()  ,\
+                    "residue_name"      : STR( line[17:20] ).strip()  ,\
+                    "chain_identifier"  : STR( line[21] ).strip()  ,\
+                    "sequence_number"   : INT( line[22:26] ) ,\
+                    "code_of_insertion" : STR( line[26] ).strip()  ,\
+                    "coordinates_x"     : FLOAT( line[30:38] ) ,\
+                    "coordinates_y"     : FLOAT( line[38:46] ) ,\
+                    "coordinates_z"     : FLOAT( line[46:54] ) ,\
+                    "occupancy"         : FLOAT( line[54:60] ) ,\
+                    "temperature_factor": FLOAT( line[60:66] ) ,\
+                    "segment_identifier": STR( line[72:76] ).strip()  ,\
+                    "element_symbol"    : STR( line[76:78] ).strip()  ,\
+                    "charge"            : STR( line[78:80] ).strip()  ,\
+                   }
+            if self._checkElements:
+                assert rec['element_symbol'] in __atoms_database__, "Element symbol '%s' given at column 76-77 is not valid"%rec['element_symbol']
+            self.records.append( rec )
         except Exception as err:
-            Logger.error("Unable to read line number '{i}' for ATOM '{l}'".format(l=line.replace('\n',''),i=index))
+            m = "Unable to read line number '{i}' for ATOM '{l}' ({err})".format(l=line.replace('\n',''),i=index, err=err)
+            assert not self._raiseReadingError, Logger.error(m)
+            Logger.warn(m)
         # return model
         return model
 
@@ -1475,14 +1485,14 @@ class pdbparser(object):
         """
         self.models = {}
 
-    def read_pdb(self, filePath, _assertLen=True, _log=True):
+    def read_pdb(self, filePath, _assertLen=True, _checkElements=True, _raiseReadingError=True, _log=True):
         """
         Reads and parses the pdb file and save all its records and informations. \n
 
         :Parameters:
             #. filePath (None, string, list): the input pdb file path or file lines. If None, pdb will be reseted
         """
-        self.__reset__()
+        self.__reset__(checkElements=_checkElements, raiseReadingError=_raiseReadingError)
         if filePath is None:
             return
         elif isinstance(filePath, (list, tuple)):
