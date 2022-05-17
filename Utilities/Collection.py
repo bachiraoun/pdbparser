@@ -22,8 +22,35 @@ from pdbparser.Utilities.Database import __atoms_database__, is_element
 
 
 # parsing string to int or float, returns empty string if not possible
-FLOAT = lambda s: float(s)      if s.replace('.','',1).replace('-','',1).strip().isdigit() else np.nan
-INT   = lambda s: int(float(s)) if s.replace('.','',1).replace('-','',1).strip().isdigit() else -1
+
+#FLOAT = lambda s: float(s)      if s.replace('.','',1).replace('-','',1).strip().isdigit() else np.nan
+#INT   = lambda s: int(float(s)) if s.replace('.','',1).replace('-','',1).strip().isdigit() else -1
+
+def FLOAT(n, throw=False):
+    try:
+        return float(n)
+    except:
+        assert throw is False, "unable to convert '%s' to float%s"%(n, '. %s'%throw if isinstance(throw, str) else '')
+        return np.nan
+
+def INT(n, throw=False):
+    try:
+        return int(n) #int(float(int))
+    except:
+        assert throw is False, "unable to convert '%s' to int%s"%(n, '. %s'%throw if isinstance(throw, str) else '')
+        return -1
+
+
+def STR(s):
+    if isinstance(s, str):
+        return s
+    elif isinstance(s, basestring):
+        return str(s)
+    elif isinstance(s, bytes):
+        return str(s, 'utf-8', 'ignore')
+    else:
+        return str(s)
+
 
 # compare two lists
 compare_two_lists = lambda x, y: Counter(x) == Counter(y)

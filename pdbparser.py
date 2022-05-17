@@ -74,15 +74,6 @@ def get_pymol_path():
     return p
 
 
-def STR(s):
-    if isinstance(s, str):
-        return s
-    elif isinstance(s, basestring):
-        return str(s)
-    elif isinstance(s, bytes):
-        return str(s, 'utf-8', 'ignore')
-    else:
-        return str(s)
 
 def _normalize_path(path):
     if os.sep=='\\':
@@ -119,7 +110,7 @@ class pdbparser(object):
 
     def __init__(self, filePath=None, name=None):
         # initialize all attributes
-        self.__reset__()
+        self._reset()
         # load pdb
         self.read_pdb(filePath)
         # set name
@@ -174,7 +165,7 @@ class pdbparser(object):
         # return
         return dependencies, '\n'.join(code)
 
-    def __reset__(self, checkElements=True, raiseReadingError=False):
+    def _reset(self, readCheckFlags=None, raiseReadingError=False):
         self.filePath=None
         self.__name = None
         self.records = []
@@ -209,8 +200,12 @@ class pdbparser(object):
         self._density            = None
         self._numberDensity      = None
         # checking flags
+        if readCheckFlags is None:
+            readCheckFlags = {}
+        assert isinstance(readCheckFlags, dict), "readCheckFlags must be None or dictionary"
+        checkElements = readCheckFlags.get('checkElements', True)
         assert isinstance(checkElements, bool), "checkElements must be bool"
-        self._checkElements = checkElements
+        self._readCheckElements = checkElements
         assert isinstance(raiseReadingError, bool), "raiseReadingError must be bool"
         self._raiseReadingError = raiseReadingError
 
@@ -818,17 +813,17 @@ class pdbparser(object):
                     "chain_identifier"  : STR( line[21] ).strip()  ,\
                     "sequence_number"   : INT( line[22:26] ) ,\
                     "code_of_insertion" : STR( line[26] ).strip()  ,\
-                    "coordinates_x"     : FLOAT( line[30:38] ) ,\
-                    "coordinates_y"     : FLOAT( line[38:46] ) ,\
-                    "coordinates_z"     : FLOAT( line[46:54] ) ,\
+                    "coordinates_x"     : FLOAT( line[30:38], throw="x coordinates must be a float number defined between column [30-38]" ) ,\
+                    "coordinates_y"     : FLOAT( line[38:46], throw="y coordinates must be a float number defined between column [38-46]" ) ,\
+                    "coordinates_z"     : FLOAT( line[46:54], throw="z coordinates must be a float number defined between column [46-54]" ) ,\
                     "occupancy"         : FLOAT( line[54:60] ) ,\
                     "temperature_factor": FLOAT( line[60:66] ) ,\
                     "segment_identifier": STR( line[72:76] ).strip()  ,\
                     "element_symbol"    : STR( line[76:78] ).strip()  ,\
                     "charge"            : STR( line[78:80] ).strip()  ,\
                    }
-            if self._checkElements:
-                assert rec['element_symbol'] in __atoms_database__, "Element symbol '%s' given at column 76-77 is not valid"%rec['element_symbol']
+            if self._readCheckElements:
+                assert rec['element_symbol'] in __atoms_database__, "Element symbol '%s' given at column [76-77] is not valid"%rec['element_symbol']
             self.records.append( rec )
         except Exception as err:
             m = "Unable to read line number '{i}' for ATOM '{l}' ({err})".format(l=line.replace('\n',''),i=index, err=err)
@@ -1485,14 +1480,14 @@ class pdbparser(object):
         """
         self.models = {}
 
-    def read_pdb(self, filePath, _assertLen=True, _checkElements=True, _raiseReadingError=True, _log=True):
+    def read_pdb(self, filePath, readCheckFlags=None, _assertLen=True, _raiseReadingError=True, _log=True):
         """
         Reads and parses the pdb file and save all its records and informations. \n
 
         :Parameters:
             #. filePath (None, string, list): the input pdb file path or file lines. If None, pdb will be reseted
         """
-        self.__reset__(checkElements=_checkElements, raiseReadingError=_raiseReadingError)
+        self._reset(readCheckFlags=readCheckFlags, raiseReadingError=_raiseReadingError)
         if filePath is None:
             return
         elif isinstance(filePath, (list, tuple)):
@@ -2040,7 +2035,7 @@ class pdbTrajectory(object):
         :Parameters:
             #. trajectory (string): unless set to None, trajectory file path to load.
         """
-        self.__reset__()
+        self._reset()
         # load trajectory
         if trajectory is not None:
             self.load(trajectory)
@@ -2048,7 +2043,7 @@ class pdbTrajectory(object):
     def __len__(self):
         return len(self._coordinates)
 
-    def __reset__(self):
+    def _reset(self):
         self._filePath = None
         self.__configurationIndex = 0
         self._structure = pdbparser()
@@ -2230,7 +2225,7 @@ class pdbTrajectory(object):
                 structure = pdbparser(structure)
             except:
                 raise Logger.error("pdbTrajectory structure must be pdbparser convertible file or None")
-        self.__reset__()
+        self._reset()
         self._structure = structure
 
     def save(self, path):
