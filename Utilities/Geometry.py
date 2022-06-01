@@ -4,7 +4,7 @@ This module contains all geometry related methods.
 
 # standard libraries imports
 from __future__ import print_function
-import parser
+#import parser ## deprecated
 
 # external libraries imports
 import numpy as np
@@ -468,14 +468,15 @@ def get_satisfactory_records_indexes(indexes, pdb, expression):
             #. indexes (list): the records indexes that satisfies the expression.
     """
     # evaluating expression
-    code = parser.expr(expression).compile()
+    #code = parser.expr(expression).compile()
     # get coordinates and parse x, y and z
     coords = get_coordinates(indexes, pdb)
     x = coords[:,0]
     y = coords[:,1]
     z = coords[:,2]
     # evaluate expression
-    goodIndexes = eval(code)
+    #goodIndexes = eval(code)
+    goodIndexes = eval(expression)
     # get all satisfactory atoms indexes
     return [indexes[idx] for idx in range(len(goodIndexes)) if  goodIndexes[idx] ]
 

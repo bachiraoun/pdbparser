@@ -6,9 +6,10 @@ This module contains classes used to construct new pdb systems.
 """
 # standard libraries imports
 from __future__ import print_function
-import copy, parser, sys
+import copy, sys
 if sys.version_info[0] >= 3:
     basestring = str
+#import parser # deprecated
 
 # external libraries imports
 import numpy as np
@@ -610,8 +611,9 @@ class Construct(object):
 
         for expression in self.restrictions:
             Logger.info("Evaluating %r restriction expression" %expression)
-            code = parser.expr(expression).compile()
-            indexes = eval(code)
+            #code = parser.expr(expression).compile()
+            #indexes = eval(code)
+            indexes = eval(expression)
             goodIndexes = np.array([idx for idx in range(len(indexes)) if  indexes[idx] ])
             goodIndexes = np.array(xyz[goodIndexes] - self.translateToBoxCenterVector).astype(int)
             self.box3DGrid[goodIndexes[:,0],goodIndexes[:,1],goodIndexes[:,2]] = self.restrictedUnitValue
