@@ -18,4 +18,4 @@ from .__pkginfo__ import __version__, __author__
 #from ._globals import get_parameters, write_parameters, set_vmd_path, get_parameter_value, update_parameters
 
 # import important definitions
-from .pdbparser import pdbparser, pdbTrajectory
+from .pdbparser import pdbparser, pdbTrajectory, get_pdb_from_xyz

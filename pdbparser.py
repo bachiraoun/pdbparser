@@ -29,7 +29,7 @@ from .Utilities.Modify import *
 from .Utilities.Collection import *
 from .Utilities.Database import *
 from .Utilities.BoundaryConditions import InfiniteBoundaries, PeriodicBoundaries
-from .Utilities.Database import __avogadroNumber__, __atoms_database__
+from .Utilities.Database import __avogadroNumber__, __atoms_database__, __ATOM__
 
 # python version dependant imports
 if int(sys.version[0])>=3:
@@ -79,6 +79,109 @@ def _normalize_path(path):
     if os.sep=='\\':
         path = re.sub(r'([\\])\1+', r'\1', path).replace('\\','\\\\')
     return path
+
+
+def get_pdb_from_xyz(xyz, boundaryConditions=None):
+    """read xyz file or a list of xyz lines and create pdbparser instance
+
+    :Parameters:
+        #. xyz (string, list): list of xyz file lines or xyz file path
+        #. boundaryConditions (None, InfiniteBoundaries, PeriodicBoundaries,
+           numpy.ndarray, number): The configuration's boundary conditions.
+           If None, boundaryConditions will be parsed from pdb if existing
+           otherwise, InfiniteBoundaries with no periodic boundaries will
+           be set. If numpy.ndarray is given, it must be pass-able
+           to a PeriodicBoundaries instance. Normally any real
+           numpy.ndarray of shape (1,), (3,1), (9,1), (3,3) is allowed.
+           If number is given, it's like a numpy.ndarray of shape (1,),
+           it is assumed as a cubic box of box length equal to number.
+
+    :Returns:
+        #. pdb (pdbparser): pdbparser instance
+        #. messages (list): list of warning messages if any
+    """
+    messages = []
+    comments = []
+    if isinstance(xyz, (list,tuple)):
+        lines = []
+        for l in xyz:
+            assert isinstance(l, basestring), "xyz list items must be all strings"
+            l = l.strip()
+            if l.startswith('#'):
+                comments.append(l)
+            elif len(l):
+                lines.append(l)
+    else:
+        assert isinstance(xyz, basestring), "xyz must be a list or a string"
+        try:
+            assert os.path.isfile(xyz), "Given xyz file path '%s' is not found"%xyz
+            lines = []
+            with open(xyz, "r") as fd:
+                for l in fd.readlines():
+                    l = l.strip()
+                    if l.startswith('#'):
+                        comments.append(l)
+                    elif len(l):
+                        lines.append(l)
+        except Exception as err:
+            raise Exception("Unable to read xyz file '%s' (%s)"%(xyz, err))
+    assert len(lines)>2, "Number of lines in xyz file must be >2"
+    # parse coments for boundary conditions
+    if boundaryConditions is None:
+        for c in comments:
+            if c.startswith('# Boundary Conditions:'):
+                bcVectors = c.split("# Boundary Conditions: ")[1].strip().split()
+                if not len(bcVectors)==9:
+                    messages.append("Wrong boundary conditions comment line is found '%s'. Comment line ignored"%c)
+                else:
+                    if boundaryConditions is not None:
+                        messages("multiple boundary conditions found. old value updated with '%s'"%c)
+                    boundaryConditions = np.array([float(item) for item in bcVectors])
+    # read xyz file
+    try:
+        natoms = int(lines[0])
+    except Exception as err:
+        raise Exception("xyz first uncommented line must be an integer indicating the number of atoms in the sytem")
+    assert natoms>0, "xyz file first line must indicate the number of atoms to read and that must be >0. %s is found"%lines[0]
+    assert len(lines) == natoms+2, "xyz file number of atom lines must be indicated in first uncomment line and the number of effective lines must be equal to the found number of atoms +2"
+    # create pdb records
+    rec = copy.copy(__ATOM__)
+    rec['residue_name'] = 'XYZ' # xyz molecule
+    records = []
+    seqNum  = 1
+    segId   = '0'
+    for l in lines[2:]:
+        sl = l.split()
+        assert len(sl) == 4, "wrong xyz file '%s'. Number of of items must be equal to 4"%l
+        try:
+            assert is_element(sl[0]), "element '%s' is not valid"%sl[0]
+            x = float(sl[1])
+            y = float(sl[2])
+            z = float(sl[3])
+            e = sl[0]
+        except Exception as err:
+            raise Exception( "Unable to parse xyz line '%s' (%s)"%(l, err) )
+        else:
+            rec   = copy.copy(rec)
+            rec['coordinates_x']      = x
+            rec['coordinates_y']      = y
+            rec['coordinates_z']      = z
+            rec['element_symbol']     = e
+            rec['atom_name']          = e
+            rec['sequence_number']    = seqNum
+            rec['segment_identifier'] = segId
+            records.append(rec)
+            seqNum += 1
+            if seqNum == 9999:
+                seqNum = 1
+                segId  = str(int(segId) + 1)
+    # create pdb
+    pdb = pdbparser()
+    pdb.records = records
+    assert len(pdb), "xyz returned an empty pdb"
+    return pdb, messages
+
+
 
 class pdbparser(object):
     """
