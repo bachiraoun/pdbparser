@@ -177,6 +177,7 @@ def get_pdb_from_xyz(xyz, boundaryConditions=None):
                 segId  = str(int(segId) + 1)
     # create pdb
     pdb = pdbparser()
+    pdb.set_boundary_conditions(boundaryConditions)
     pdb.records = records
     assert len(pdb), "xyz returned an empty pdb"
     return pdb, messages
@@ -1145,12 +1146,24 @@ class pdbparser(object):
         set pdbparser boundary conditions instance.
 
         :Parameters:
-            #. bc (InfiniteBoundaries, PeriodicBoundaries): the boundary conditions instance
+            #. bc (None, InfiniteBoundaries, PeriodicBoundaries, list,tuple, numpy.ndarray, number):
+               If None, boundaryConditions will be set tot InfiniteBoundaries
+               If numpy.ndarray, list,tuple or a number is given, it must be pass-able
+               to a PeriodicBoundaries instance. Normally any real
+               numpy.ndarray of shape (1,), (3,1), (9,1), (3,3) is allowed.
+               If number is given, it's like a numpy.ndarray of shape (1,),
+               it is assumed as a cubic box of box length equal to number.
         """
         if bc is None:
             bc = InfiniteBoundaries()
-        else:
-            assert isinstance(bc, (InfiniteBoundaries, PeriodicBoundaries)), "bc must be either None, InfiniteBoundaries or PeriodicBoundaries instance"
+        elif is_number(bc) or isinstance(bc, (list, tuple, np.ndarray)):
+            try:
+                _bc = PeriodicBoundaries()
+                _bc.set_vectors(bc)
+                bc = _bc
+            except:
+                raise Exception( "bc must be an InfiniteBoundaries or PeriodicBoundaries instance or a valid vectors numpy.array or a positive number" )
+        assert isinstance(bc, (InfiniteBoundaries, PeriodicBoundaries)), "bc must be either None, InfiniteBoundaries or PeriodicBoundaries instance"
         self._boundaryConditions = bc
         # update crystallographicStructure
         if not isinstance(self._boundaryConditions, PeriodicBoundaries):

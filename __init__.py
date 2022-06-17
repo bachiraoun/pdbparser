@@ -19,3 +19,4 @@ from .__pkginfo__ import __version__, __author__
 
 # import important definitions
 from .pdbparser import pdbparser, pdbTrajectory, get_pdb_from_xyz
+from .Utilities.Crystallography import CrystalMaker
