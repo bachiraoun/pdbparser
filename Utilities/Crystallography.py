@@ -608,6 +608,7 @@ class CrystalMaker(object):
         bCoords  = []
         sitesSym = []
         bcd      = []
+        #symOps   = [[item.replace('x','{x}').replace('y','{y}').replace('z','{z}') for item in s] for s in self.__symOps]
         for aIdx, (el, nm, x, y, z, o) in enumerate(self.__atoms):
             # replace with actual values and check for redundancy given _precision
             pos = {}
@@ -615,6 +616,8 @@ class CrystalMaker(object):
                 p = [ so[0].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)),
                       so[1].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)),
                       so[2].replace('x', str(x)).replace('y', str(y)).replace('z', str(z)) ]
+            #for so in symOps:
+            #    p = [s.format(x=x,y=y,z=z) for s in so]
                 if _precision is not None:
                     p = tuple([round(eval(i) % 1, _precision) for i in p])
                 else:
