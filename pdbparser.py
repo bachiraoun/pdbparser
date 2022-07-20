@@ -1302,7 +1302,7 @@ class pdbparser(object):
             #. coordinates (np.array): the new atoms coordinates.
         """
         assert isinstance(coordinates, np.ndarray), Logger.error("coordinates must be numpy.ndarray instance")
-        assert coordinates.shape==(self.numberOfAtoms, 3), Logger.error("coordinates shape must be %s"%((self.numberOfAtoms, 3)))
+        assert coordinates.shape==(self.numberOfAtoms, 3), Logger.error("coordinates shape %s but it must be %s"%(coordinates.shape, (self.numberOfAtoms, 3),))
         set_coordinates(self.indexes, self, coordinates)
 
     def set_coordinates(self, coordinates):
@@ -2845,7 +2845,7 @@ class pdbTrajectory(object):
         assert index<len(self), Logger.error("configuraion index must not smaller then trajectory length %s"%len(self))
         index = int(index)
         assert isinstance(coordinates, np.ndarray), Logger.error("coordinates must be numpy.ndarray instance")
-        assert coordinates.shape==(self.numberOfAtoms, 3), Logger.error("coordinates shape must be %s"%((self.numberOfAtoms, 3)))
+        assert coordinates.shape==(self.numberOfAtoms, 3), Logger.error("coordinates shape %s but it must be %s"%(coordinates.shape, (self.numberOfAtoms, 3),))
         self._coordinates[index] =  coordinates
 
     def set_atoms_coordinates(self, index, atomsIndexes, coordinates):
