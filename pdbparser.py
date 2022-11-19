@@ -398,6 +398,10 @@ class pdbparser(object):
         return self._boundaryConditions
 
     @property
+    def volume(self):
+        return self._volume
+
+    @property
     def density(self):
         return self._density
 
@@ -1173,6 +1177,7 @@ class pdbparser(object):
             alpha = float( 90.00 )
             beta  = float( 90.00 )
             gamma = float( 90.00 )
+            self._volume        = None
             self._density       = None
             self._numberDensity = None
         else:
@@ -1188,6 +1193,7 @@ class pdbparser(object):
             volume      = float(self._boundaryConditions.get_box_volume())
             to_g_cm3    = 1e-24
             molarWeight = np.sum(get_records_database_property_values(self.indexes, self, "atomicWeight"))
+            self._volume        = volume
             self._density       = molarWeight/volume/to_g_cm3/__avogadroNumber__
             self._numberDensity = float(len(self.records))/float(volume)
         self.crystallographicStructure = { "record_name": "CRYST1" ,\
