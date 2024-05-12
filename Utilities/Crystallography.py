@@ -67,7 +67,6 @@ class CrystalMaker(object):
         pdb = maker.get_pdb()
 
     """
-
     def __init__(self, symOps, atoms, unitcellBC, _allowOccupancy=True, _precision=None, _checkPosition=True, _distance=0.5, _uniqueNames=False, _pdbAtomsAttribute=None):
         self.__unitcellBC = self.__supercellBC = None
         self.__translations = ((1, -1, -1), (1, -1, 0), (1, -1, 1),
@@ -114,7 +113,7 @@ class CrystalMaker(object):
         return sorted(set(self.__unitcellNames))
 
     @classmethod
-    def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False, _readPdbAtomsAttribute=True, _allowOccupancy=True):
+    def from_cif(cls, path, resetNames=False, _distance=0.5, _uniqueNames=False, _readPdbAtomsAttribute=True, _checkPosition=True, _allowOccupancy=True):
         """Read cif file and instanciate a CrystalMaker instance.
         A valid cif file must contain all of the following
 
@@ -347,7 +346,7 @@ class CrystalMaker(object):
         builder = cls(symOps=symOps, atoms=atoms,
                       unitcellBC=[A, B, C, ALPHA, BETA, GAMMA],
                       _precision=_precision, _distance=_distance,
-                      _allowOccupancy=_allowOccupancy,
+                      _allowOccupancy=_allowOccupancy, _checkPosition=_checkPosition,
                       _uniqueNames=_uniqueNames, _pdbAtomsAttribute=_pdbAtomsAttribute)
         # return
         return builder
@@ -624,12 +623,15 @@ class CrystalMaker(object):
                     p = tuple([eval(i) % 1 for i in p])
                 if p in pos and _checkPosition:
                     #print('stage 1 correction:', "%s is redundant given precisions %s"%(p, _precision))
+                    #print("{klass} site redundancy. Redundancy in site '{p}' is omitted".format(klass=self.__class__.__name__,  p=p))
+                    #Logger.warn("{klass} site redundancy. Redundancy in site '{p}' is omitted".format(klass=self.__class__.__name__,  p=p))
                     continue
                 if len(bcd) and _distance is not None:
                     _dist = self.unitcellBC.box_vectors_real_distance(boxVector=np.array(p), boxArray=np.array(bcd))
                     _idxs = np.where(_dist < _distance)[0]
                     if len(_idxs):
-                        #print('stage 2 correction:', "%s is redundant given distance %s"%(p, _distance))
+                        #print("{klass} site correction. Site '{p}' is omitted because it's found within distance '{d}' from other sites".format(klass=self.__class__.__name__,  p=p, d=_distance))
+                        #Logger.warn("{klass} site correction. Site '{p}' is omitted because it's found within distance '{d}' from other sites".format(klass=self.__class__.__name__,  p=pos, d=_distance))
                         continue
                 pos[p] = so
                 bcd.append(p)
@@ -652,9 +654,17 @@ class CrystalMaker(object):
         for pos in posLUT:
             val = posLUT[pos]
             els = [i[0] for i in val]
-            tot = sum([i[2] for i in val])
-            assert tot > 0 and tot <= 1, "occupancy must be >0 and <=1. At coordinates '%s' '%s' occupancy is found betwen '%s' elements" % (
-                pos, tot, els)
+            occ = sum([i[2] for i in val])
+            # Collapse same element in the same site
+            if occ > 1:
+                if len(set(els))>1:
+                    raise Exception("total occupancy sum must be >0 and <=1. At site '%s' elements %s total occupancy is '%s'"%(pos, els, occ, ))
+                else:
+                    #print("{klass} site occupancy auto-adjusted to '1'. Element '{el}' is found '{l}' in site {p} with total occupancy '{o}'".format(klass=self.__class__.__name__, el=els[0], l=len(els), p=pos, o=occ))
+                    #Logger.warn("{klass} site occupancy auto-adjusted to '1'. Element '{el}' is found '{l}' in site {p} with total occupancy '{o}'".format(klass=self.__class__.__name__, el=els[0], l=len(els), p=pos, o=occ))
+                    val = [(val[0][0],val[0][1], 1)]
+                    els = [els[0]]
+                    posLUT[pos] = val
             if len(els) > 1:
                 key = '_'.join(els)
                 key = '$M-%s-%i' % (key, len(sitesLUT))
