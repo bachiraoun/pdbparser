@@ -265,7 +265,7 @@ def orbital_information(element, ionization=0):
     # _         = [elecList.extend(list(range(1,eLUT[o[1]]+1))) for o in orbitals]
     elecList  = [1, 2, 1, 2, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2]
     # check number of electrons
-    assert nelec>=0 and nelec<len(orbsList), f"Given element '{element}' and ionization '{ionization}' resulted in out of bound [0,{len(orbcum)}[ number of electrons '{nelec}'"
+    assert nelec>=0 and nelec<len(orbsList), f"Given element '{element}' and ionization '{ionization}' resulted in out of bound [0,{len(orbsList)}[ number of electrons '{nelec}'"
     # return
     if nelec>0:
         o = orbsList[nelec-1]
