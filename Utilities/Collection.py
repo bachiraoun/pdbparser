@@ -18,7 +18,7 @@ from numpy.fft import ifft as iFFT
 
 # pdbparser library imports
 from pdbparser.log import Logger
-from pdbparser.Utilities.Database import __atoms_database__, is_element
+from pdbparser.Utilities.Database import __atoms_database__, is_element, get_element_property
 
 
 # parsing string to int or float, returns empty string if not possible
@@ -210,6 +210,70 @@ def get_atomic_form_factor(q, element, charge=0):
     t3=a3*np.exp(-b3*qOver4piSquare)
     t4=a4*np.exp(-b4*qOver4piSquare)
     return t1+t2+t3+t4+c
+
+
+
+def orbital_information(element, ionization=0):
+    """get orbital information given an element or a number of electrons
+
+    :Parameters:
+        #. element (int, string): element number of electrons or the element name
+        #. ionization (integer): ionization value
+
+    #. returns
+        #. config (dict): orbital configuration dict with the following key value pairs
+          {'total_number_of_electrons': the total number of electrons in the element considering ionization. e.g. 8
+           'orbital': the actual orbital. e.g. '2p',
+           'n': the principal quantum number (n) that describes the size of the orbital. e.g. 2
+           'l':The angular quantum number (l) describes the shape of the orbital. e.g. 1
+           'valence_electrons': number of electrons in the valance shell. e.g. 4
+           'valence_voids': number of electrons needed to complete the valence shell. e.g. 2
+           'args': dictionary of this current function args that led to those results e.g. {'element':'o', 'ionization':0}
+          }
+
+    """
+    #charge = ...(element)-ionization
+    # 1s 2s 2p 3s 3p 4s 3d 4p 5s 4d 5p 6s 4f 5d 6p 7s 5f 6d 7p 8s
+    # s2  p6  d10   f14
+    assert is_integer(ionization), 'ionization must be an inteter'
+    ionization = int(ionization)
+    try:
+        if is_integer(element):
+            nelec = int(element)
+            assert nelec>=0, ''
+        else:
+            assert isinstance(element, str), ''
+            nelec = get_element_property(element.lower(), 'atomicNumber')
+            #nelec = ...(element)
+    except:
+        raise Exception("element must be an integer >0 or an actual element name string")
+    nelec += ionization
+    # get orbital
+    #eLUT      = {'s':2,'p':6,'d':10,'f':14}
+    #lLUT      = {'s':0,'p':1,'d':2,'f':3}
+    #orbitals  = ['1s', '2s', '2p', '3s', '3p', '4s', '3d', '4p', '5s', '4d', '5p', '6s', '4f', '5d', '6p', '7s', '5f', '6d', '7p', '8s']
+    #eLUT      = dict([(o,eLUT[o[1]]) for o in orbitals])
+    eLUT      = {'1s': 2, '2s': 2, '2p': 6, '3s': 2, '3p': 6, '4s': 2, '3d': 10, '4p': 6, '5s': 2, '4d': 10, '5p': 6, '6s': 2, '4f': 14, '5d': 10, '6p': 6, '7s': 2, '5f': 14, '6d': 10, '7p': 6, '8s': 2}
+    #nLUT       = dict([(o,int(o[0]) ) for o in orbitals])
+    nLUT      = {'1s': 1, '2s': 2, '2p': 2, '3s': 3, '3p': 3, '4s': 4, '3d': 3, '4p': 4, '5s': 5, '4d': 4, '5p': 5, '6s': 6, '4f': 4, '5d': 5, '6p': 6, '7s': 7, '5f': 5, '6d': 6, '7p': 7, '8s': 8}
+    #lLUT      = dict([(o,lLUT[o[1]]) for o in orbitals])
+    lLUT      = {'1s': 0, '2s': 0, '2p': 1, '3s': 0, '3p': 1, '4s': 0, '3d': 2, '4p': 1, '5s': 0, '4d': 2, '5p': 1, '6s': 0, '4f': 3, '5d': 2, '6p': 1, '7s': 0, '5f': 3, '6d': 2, '7p': 1, '8s': 0}
+    #orbsList  = []
+    #_         = [orbsList.extend([o,]*eLUT[o[1]]) for o in orbitals]
+    orbsList  = ['1s', '1s', '2s', '2s', '2p', '2p', '2p', '2p', '2p', '2p', '3s', '3s', '3p', '3p', '3p', '3p', '3p', '3p', '4s', '4s', '3d', '3d', '3d', '3d', '3d', '3d', '3d', '3d', '3d', '3d', '4p', '4p', '4p', '4p', '4p', '4p', '5s', '5s', '4d', '4d', '4d', '4d', '4d', '4d', '4d', '4d', '4d', '4d', '5p', '5p', '5p', '5p', '5p', '5p', '6s', '6s', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '4f', '5d', '5d', '5d', '5d', '5d', '5d', '5d', '5d', '5d', '5d', '6p', '6p', '6p', '6p', '6p', '6p', '7s', '7s', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '5f', '6d', '6d', '6d', '6d', '6d', '6d', '6d', '6d', '6d', '6d', '7p', '7p', '7p', '7p', '7p', '7p', '8s', '8s']
+    #elecList  = []
+    # _         = [elecList.extend(list(range(1,eLUT[o[1]]+1))) for o in orbitals]
+    elecList  = [1, 2, 1, 2, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 1, 2]
+    # check number of electrons
+    assert nelec>=0 and nelec<len(orbsList), f"Given element '{element}' and ionization '{ionization}' resulted in out of bound [0,{len(orbcum)}[ number of electrons '{nelec}'"
+    # return
+    if nelec>0:
+        o = orbsList[nelec-1]
+        v = elecList[nelec-1]
+    else:
+        o = '1s'
+        v = 0
+    return {'total_number_of_electrons':nelec, 'orbital':o, 'n':nLUT[o], 'l':lLUT[o], 'valence_electrons':v, 'valence_voids':eLUT[o]-v, 'args':{'element':element, 'ionization':ionization}}
 
 
 def get_normalized_weighting(numbers, weights, pairsWeight=None):
