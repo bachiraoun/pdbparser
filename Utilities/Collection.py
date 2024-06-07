@@ -228,6 +228,7 @@ def orbital_information(element, ionization=0):
            'l':The angular quantum number (l) describes the shape of the orbital. e.g. 1
            'valence_electrons': number of electrons in the valance shell. e.g. 4
            'valence_voids': number of electrons needed to complete the valence shell. e.g. 2
+           'all_orbitals': list of all possible orbitals
            'args': dictionary of this current function args that led to those results e.g. {'element':'o', 'ionization':0}
           }
 
@@ -251,7 +252,7 @@ def orbital_information(element, ionization=0):
     # get orbital
     #eLUT      = {'s':2,'p':6,'d':10,'f':14}
     #lLUT      = {'s':0,'p':1,'d':2,'f':3}
-    #orbitals  = ['1s', '2s', '2p', '3s', '3p', '4s', '3d', '4p', '5s', '4d', '5p', '6s', '4f', '5d', '6p', '7s', '5f', '6d', '7p', '8s']
+    orbitals  = ['1s', '2s', '2p', '3s', '3p', '4s', '3d', '4p', '5s', '4d', '5p', '6s', '4f', '5d', '6p', '7s', '5f', '6d', '7p', '8s']
     #eLUT      = dict([(o,eLUT[o[1]]) for o in orbitals])
     eLUT      = {'1s': 2, '2s': 2, '2p': 6, '3s': 2, '3p': 6, '4s': 2, '3d': 10, '4p': 6, '5s': 2, '4d': 10, '5p': 6, '6s': 2, '4f': 14, '5d': 10, '6p': 6, '7s': 2, '5f': 14, '6d': 10, '7p': 6, '8s': 2}
     #nLUT       = dict([(o,int(o[0]) ) for o in orbitals])
@@ -273,7 +274,7 @@ def orbital_information(element, ionization=0):
     else:
         o = '1s'
         v = 0
-    return {'total_number_of_electrons':nelec, 'orbital':o, 'n':nLUT[o], 'l':lLUT[o], 'valence_electrons':v, 'valence_voids':eLUT[o]-v, 'args':{'element':element, 'ionization':ionization}}
+    return {'total_number_of_electrons':nelec, 'orbital':o, 'n':nLUT[o], 'l':lLUT[o], 'valence_electrons':v, 'valence_voids':eLUT[o]-v, 'all_orbitals':orbitals,'args':{'element':element, 'ionization':ionization}}
 
 
 def get_normalized_weighting(numbers, weights, pairsWeight=None):
