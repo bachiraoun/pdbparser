@@ -14,7 +14,7 @@ import numpy as np
 # pdbparser library imports
 from ..log import Logger
 from .Database import is_element, __ATOM__
-from .BoundaryConditions import PeriodicBoundaries
+from .BoundaryConditions import PeriodicBoundaries, InfiniteBoundaries
 
 
 class CrystalMaker(object):
@@ -56,8 +56,7 @@ class CrystalMaker(object):
         alpha     = 90.    # (alpha, the angle between b and c)
         beta      = 125.55 # (beta,  the angle between a and c)
         gamma     = 90.    # (gamma, the angle between a and b)
-        maker = CR.CrystalMaker(symOps=ops, atoms=atoms, unitcellBC=[
-                                a,b,c,alpha,beta,gamma])
+        maker = CR.CrystalMaker(symOps=ops, atoms=atoms,unitcellBC=[a,b,c,alpha,beta,gamma])
         maker.create_supercell((10,10,10))
         pdb = maker.get_pdb()
 
@@ -232,8 +231,7 @@ class CrystalMaker(object):
                     try:
                         splitted = split_loop_line(line=l, n=len(loopHeader))
                     except Exception as err:
-                        print(
-                            "@ line '%i' (%s) loop unexpectedly broken. Unable to split loop line (%s) " % (lidx, l, err))
+                        print("@ line '%i' (%s) loop unexpectedly broken. Unable to split loop line (%s) " % (lidx, l, err))
                         loopBuild = -1
                         attributes.append(l)
                         if len(loopData):
@@ -262,26 +260,71 @@ class CrystalMaker(object):
         attributes, loops = parse_file(path)
         # search for a,b,c,alpha,beta,gamma
         A = B = C = ALPHA = BETA = GAMMA = None
-        lines = []
+        _infBC = set(['','none','nan','na','inf'])
+        lines  = []
         for l in attributes:
             if l.startswith('_cell_length_a'):
-                A = float(l[len('_cell_length_a'):].split('(')[0])
+                try:
+                    V = l[len('_cell_length_a'):].split('(')[0].strip()
+                    if V.lower() not in _infBC:
+                        A = float(V)
+                except:
+                    raise Exception(f"Unable to parse '_cell_length_a' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_length_b'):
-                B = float(l[len('_cell_length_b'):].split('(')[0])
+                try:
+                    B = l[len('_cell_length_b'):].split('(')[0].strip()
+                    if B.lower() not in _infBC:
+                        B = float(B)
+                except:
+                    raise Exception(f"Unable to parse '_cell_length_b' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_length_c'):
-                C = float(l[len('_cell_length_c'):].split('(')[0])
+                try:
+                    C = l[len('_cell_length_c'):].split('(')[0].strip()
+                    if C.lower() not in _infBC:
+                        C = float(C)
+                except:
+                    raise Exception(f"Unable to parse '_cell_length_c' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_angle_alpha'):
-                ALPHA = float(l[len('_cell_angle_alpha'):].split('(')[0])
+                try:
+                    V = l[len('_cell_angle_alpha'):].split('(')[0].strip()
+                    if V.lower() not in _infBC:
+                        ALPHA = float(V)
+                except:
+                    raise Exception(f"Unable to parse '_cell_length_alpha' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_angle_beta'):
-                BETA = float(l[len('_cell_angle_beta'):].split('(')[0])
+                try:
+                    V = l[len('_cell_angle_beta'):].split('(')[0].strip()
+                    if V.lower() not in _infBC:
+                        BETA = float(V)
+                except:
+                    raise Exception(f"Unable to parse '_cell_length_beta' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_angle_gamma'):
-                GAMMA = float(l[len('_cell_angle_gamma'):].split('(')[0])
-        assert A is not None, "'_cell_length_a' not found in cif file"
-        assert B is not None, "'_cell_length_b' not found in cif file"
-        assert C is not None, "'_cell_length_c' not found in cif file"
-        assert ALPHA is not None, "'_cell_angle_alpha' not found in cif file"
-        assert BETA is not None, "'_cell_angle_beta' not found in cif file"
-        assert GAMMA is not None, "'_cell_angle_gamma' not found in cif file"
+                try:
+                    V = l[len('_cell_angle_gamma'):].split('(')[0].strip()
+                    if V.lower() not in _infBC:
+                        GAMMA = float(V)
+                except:
+                    raise Exception(f"Unable to parse '_cell_length_gamma' value '{V}', it must be a number of any of {sorted(_infBC)}")
+        # infer missing values as long as A is given
+        if A is not None:
+            if B is None:
+                B = A
+            if C is None:
+                C = A
+            if ALPHA is None:
+                ALPHA = 90
+            if BETA is None:
+                BETA = 90
+            if GAMMA is None:
+                GAMMA = 90
+        unitcellBC = [A, B, C, ALPHA, BETA, GAMMA]
+        assert len([i is None for i in unitcellBC]), "cell parameters must be all given or None"
+        #assert A is not None, "'_cell_length_a' not found in cif file"
+        #assert B is not None, "'_cell_length_b' not found in cif file"
+        #assert C is not None, "'_cell_length_c' not found in cif file"
+        #assert ALPHA is not None, "'_cell_angle_alpha' not found in cif file"
+        #assert BETA is not None, "'_cell_angle_beta' not found in cif file"
+        #assert GAMMA is not None, "'_cell_angle_gamma' not found in cif file"
         # get atoms
         atoms = []
         _precision = {}
@@ -344,7 +387,7 @@ class CrystalMaker(object):
         if not _readPdbAtomsAttribute:
             _pdbAtomsAttribute = None
         builder = cls(symOps=symOps, atoms=atoms,
-                      unitcellBC=[A, B, C, ALPHA, BETA, GAMMA],
+                      unitcellBC=unitcellBC,
                       _precision=_precision, _distance=_distance,
                       _allowOccupancy=_allowOccupancy, _checkPosition=_checkPosition,
                       _uniqueNames=_uniqueNames, _pdbAtomsAttribute=_pdbAtomsAttribute)
@@ -410,7 +453,7 @@ class CrystalMaker(object):
     def cellShape(self):
         """get crystal class which can be 'cubic', 'tetragonal', 'orthorhombic',
         'hexagonal', 'trigonal' 'monoclinic' or 'triclinic'"""
-        if self.__unitcellBC is None:
+        if self.__unitcellBC is None or not isinstance(self.__unitcellBC, PeriodicBoundaries):
             return None
         return self.__unitcellBC.get_crystal_class(_raise=False)
 
@@ -423,7 +466,7 @@ class CrystalMaker(object):
     def latticeSymbol(self):
         """get crystal unitcell type that can be 'primitive',
         'body-centered', 'face-centered' or 'side-centered' """
-        if self.__unitcellBoxCoords is None:
+        if self.__unitcellBoxCoords is None or not isinstance(self.__unitcellBC, PeriodicBoundaries):
             return None
         trans    = [[1,0,0],[0,1,0],[0,0,1],
                     [1,1,0],[1,0,1],[0,1,1],
@@ -484,15 +527,15 @@ class CrystalMaker(object):
                 'residues': copy.deepcopy(self.__unitcellResidues),
                 'boxCoords': self.__unitcellBoxCoords,
                 'sitesSymmetry':copy.deepcopy(self.__sitesSymmetry),
-                'a': self.__unitcellBC.get_a(),
-                'b': self.__unitcellBC.get_b(),
-                'c': self.__unitcellBC.get_c(),
-                'alpha': self.__unitcellBC.get_alpha(degrees=True),
-                'beta': self.__unitcellBC.get_beta(degrees=True),
-                'gamma': self.__unitcellBC.get_gamma(degrees=True),
-                'x': self.__unitcellBC.get_vectors()[0, :],
-                'y': self.__unitcellBC.get_vectors()[1, :],
-                'z': self.__unitcellBC.get_vectors()[2, :]}
+                'a': self.__unitcellBC.get_a() if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'b': self.__unitcellBC.get_b() if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'c': self.__unitcellBC.get_c() if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'alpha': self.__unitcellBC.get_alpha(degrees=True) if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'beta': self.__unitcellBC.get_beta(degrees=True) if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'gamma': self.__unitcellBC.get_gamma(degrees=True) if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'x': self.__unitcellBC.get_vectors()[0, :] if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'y': self.__unitcellBC.get_vectors()[1, :] if isinstance(self.unitcellBC, PeriodicBoundaries) else None,
+                'z': self.__unitcellBC.get_vectors()[2, :] if isinstance(self.unitcellBC, PeriodicBoundaries) else None}
 
     @property
     def atomSites(self):
@@ -520,15 +563,15 @@ class CrystalMaker(object):
                 'segments': self.__supercellSegments,
                 'residues':self.__supercellResidues,
                 'boxCoords': self.__supercellBoxCoords,
-                'a': self.__supercellBC.get_a(),
-                'b': self.__supercellBC.get_b(),
-                'c': self.__supercellBC.get_c(),
-                'alpha': self.__supercellBC.get_alpha(degrees=True),
-                'beta': self.__supercellBC.get_beta(degrees=True),
-                'gamma': self.__supercellBC.get_gamma(degrees=True),
-                'x': self.__supercellBC.get_vectors()[0, :],
-                'y': self.__supercellBC.get_vectors()[1, :],
-                'z': self.__supercellBC.get_vectors()[2, :]}
+                'a': self.__supercellBC.get_a() if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'b': self.__supercellBC.get_b() if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'c': self.__supercellBC.get_c() if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'alpha': self.__supercellBC.get_alpha(degrees=True) if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'beta': self.__supercellBC.get_beta(degrees=True) if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'gamma': self.__supercellBC.get_gamma(degrees=True) if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'x': self.__supercellBC.get_vectors()[0, :] if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'y': self.__supercellBC.get_vectors()[1, :] if isinstance(self.__supercellBC, PeriodicBoundaries) else None,
+                'z': self.__supercellBC.get_vectors()[2, :] if isinstance(self.__supercellBC, PeriodicBoundaries) else None}
 
     @property
     def supercellRejected(self):
@@ -559,8 +602,7 @@ class CrystalMaker(object):
                          if not i.isdigit() and i not in ('/+-xyz,')]).strip()
             i2 = ''.join([i.strip() for i in item[2]
                          if not i.isdigit() and i not in ('/+-xyz,')]).strip()
-            assert not len(i0) and not len(i1) and not len(
-                i2), "symmetry operation can only contain digits and the following charachters ('+','-','/','x','y','z'). symOps index %i is not " % idx
+            assert not len(i0) and not len(i1) and not len(i2), "symmetry operation can only contain digits and the following charachters ('+','-','/','x','y','z'). symOps index %i is not " % idx
             ops.append(tuple(item))
         assert len(ops) == len(
             set(ops)), "symmetry operations redundancy is not allowed"
@@ -618,19 +660,25 @@ class CrystalMaker(object):
             #for so in symOps:
             #    p = [s.format(x=x,y=y,z=z) for s in so]
                 if _precision is not None:
-                    p = tuple([round(eval(i) % 1, _precision) for i in p])
+                    p = tuple([round(eval(i), _precision) for i in p])
                 else:
-                    p = tuple([eval(i) % 1 for i in p])
+                    p = tuple([eval(i) for i in p])
+                if isinstance(self.unitcellBC, PeriodicBoundaries):
+                    p = tuple([i%1 for i in p])
                 if p in pos and _checkPosition:
                     #print('stage 1 correction:', "%s is redundant given precisions %s"%(p, _precision))
                     #print("{klass} site redundancy. Redundancy in site '{p}' is omitted".format(klass=self.__class__.__name__,  p=p))
                     #Logger.warn("{klass} site redundancy. Redundancy in site '{p}' is omitted".format(klass=self.__class__.__name__,  p=p))
                     continue
                 if len(bcd) and _distance is not None:
-                    _dist = self.unitcellBC.box_vectors_real_distance(boxVector=np.array(p), boxArray=np.array(bcd))
+                    if isinstance(self.unitcellBC, PeriodicBoundaries):
+                        _dist = self.unitcellBC.box_vectors_real_distance(boxVector=np.array(p), boxArray=np.array(bcd))
+                    else:
+                        _dist = self.unitcellBC.real_distance(realVector=np.array(p), realArray=np.array(bcd))
+                        #print(aIdx, p, bcd, _dist)
                     _idxs = np.where(_dist < _distance)[0]
                     if len(_idxs):
-                        #print("{klass} site correction. Site '{p}' is omitted because it's found within distance '{d}' from other sites".format(klass=self.__class__.__name__,  p=p, d=_distance))
+                        #print("{klass} site correction. Site '{p}' for element '{el}' is omitted because it's found within distance '{d}' from other sites".format(klass=self.__class__.__name__,  p=p, d=_distance, el=el))
                         #Logger.warn("{klass} site correction. Site '{p}' is omitted because it's found within distance '{d}' from other sites".format(klass=self.__class__.__name__,  p=pos, d=_distance))
                         continue
                 pos[p] = so
@@ -734,7 +782,9 @@ class CrystalMaker(object):
         """
         # check boundary conditions
         if not isinstance(unitcellBC, PeriodicBoundaries):
-            if isinstance(unitcellBC, np.ndarray):
+            if isinstance(unitcellBC, InfiniteBoundaries) or unitcellBC is None:
+                BC = InfiniteBoundaries()
+            elif isinstance(unitcellBC, np.ndarray):
                 BC = PeriodicBoundaries(params=unitcellBC)
             elif isinstance(unitcellBC, (list, tuple)):
                 if len(unitcellBC) == 3:
@@ -745,11 +795,13 @@ class CrystalMaker(object):
                     BC = PeriodicBoundaries(params=None)
                     BC.set_vectors_using_abc_alpha_beta_gamma(*unitcellBC)
             else:
-                raise Exception(
-                    "bc must be PeriodicBoundaries instance, a numpy array or a list")
+                raise Exception("bc must be PeriodicBoundaries instance, a numpy array or a list")
         else:
             assert len(unitcellBC), "PeriodicBoundaries unitcellBC is empty"
             BC = unitcellBC
+        # check symmetry ops
+        if not isinstance(BC, PeriodicBoundaries):
+            assert self.__symOps==[('x', 'y', 'z'),], "InfiniteBoundaries symmetry ops must be identity ops ('x', 'y', 'z')"
         # reset supercell
         self.__supercell          = None
         self.__supercellBC        = None
@@ -788,12 +840,13 @@ class CrystalMaker(object):
         ## check supercell
         if supercell is None:
             supercell = (1, 1, 1)
-        assert isinstance(supercell, (list, tuple)
-                          ), "supercell must be None or a list"
+        assert isinstance(supercell, (list, tuple)), "supercell must be None or a list"
         assert len(supercell) == 3, "supercell if given must be of length 3"
         assert all([isinstance(i, int)
                    for i in supercell]), "supercell items must integers"
         assert all([i >= 1 for i in supercell]), "supercell items must be >=1"
+        if not isinstance(self.unitcellBC, PeriodicBoundaries):
+            assert sum(supercell)==3,  "InfiniteBoundaries supercell must be None or (1,1,1)"
         ## build supercell for all atomic sites
         _elements  = copy.deepcopy(self.__unitcellElements)
         _names     = copy.deepcopy(self.__unitcellNames)
@@ -863,16 +916,14 @@ class CrystalMaker(object):
                         break
                 if el is None:
                     # site must remain empty
-                    rejected.append(
-                        {'cell_position': pos, 'supercell_position': bc, 'atoms': ats})
+                    rejected.append({'cell_position': pos, 'supercell_position': bc, 'atoms': ats})
                     continue
             elif oc < 1:
                 if random.random() > oc:
                     # site must remain empty
                     pos = self.__sitesLUT[nm]
                     ats = self.__posLUT[pos]
-                    rejected.append(
-                        {'cell_position': pos, 'supercell_position': bc, 'atoms': ats})
+                    rejected.append({'cell_position': pos, 'supercell_position': bc, 'atoms': ats})
                     continue
             boxCoords.append(bc)
             elements.append(el)
@@ -883,10 +934,13 @@ class CrystalMaker(object):
             unitcells.append(_unitcells[idx])
             occupancy.append(oc)
         # get supercell boundary conditions
-        x = supercell[0] * self.__unitcellBC.get_vectors()[0, :]
-        y = supercell[1] * self.__unitcellBC.get_vectors()[1, :]
-        z = supercell[2] * self.__unitcellBC.get_vectors()[2, :]
-        BC = PeriodicBoundaries(params=[x, y, z])
+        if isinstance(self.unitcellBC, PeriodicBoundaries):
+            x = supercell[0] * self.__unitcellBC.get_vectors()[0, :]
+            y = supercell[1] * self.__unitcellBC.get_vectors()[1, :]
+            z = supercell[2] * self.__unitcellBC.get_vectors()[2, :]
+            BC = PeriodicBoundaries(params=[x, y, z])
+        else:
+            BC = InfiniteBoundaries()
         # set supercell parameters
         self.__supercell          = tuple(supercell)
         self.__supercellBC        = BC
@@ -1004,7 +1058,10 @@ class CrystalMaker(object):
         # fold box coordinates into box
         boxCoords = self.get_supercell_box_coordinates(fold=fold)
         # get real coordinates
-        return self.__supercellBC.box_to_real_array(boxCoords)
+        if isinstance(self.unitcellBC, PeriodicBoundaries):
+            return self.__supercellBC.box_to_real_array(boxCoords)
+        else:
+            return boxCoords
 
     def get_supercell_box_coordinates(self, fold=True):
         """compute and return supercell box atomic coordinates
@@ -1016,14 +1073,17 @@ class CrystalMaker(object):
             #. boxCoordinates (numpy.ndarray): the supercell atomic coordinates
                array
         """
-        assert self.__supercell is not None, "supercell is not defined"
-        # normalize box coordinates
-        boxCoords = copy.deepcopy(self.__supercellBoxCoords)
-        boxCoords[:, 0] /= float(self.__supercell[0])
-        boxCoords[:, 1] /= float(self.__supercell[1])
-        boxCoords[:, 2] /= float(self.__supercell[2])
-        if fold:
-            boxCoords = self.__supercellBC.fold_box_array(boxCoords)
+        if isinstance(self.unitcellBC, PeriodicBoundaries):
+            assert self.__supercell is not None, "supercell is not defined"
+            # normalize box coordinates
+            boxCoords = copy.deepcopy(self.__supercellBoxCoords)
+            boxCoords[:, 0] /= float(self.__supercell[0])
+            boxCoords[:, 1] /= float(self.__supercell[1])
+            boxCoords[:, 2] /= float(self.__supercell[2])
+            if fold:
+                boxCoords = self.__supercellBC.fold_box_array(boxCoords)
+        else:
+            boxCoords = np.array(self.__unitcellBoxCoords, dtype=float)
         return boxCoords
 
     def get_pdb(self):
@@ -1056,8 +1116,9 @@ class CrystalMaker(object):
         pdb = pdbparser()
         pdb.records = records
         # create new boundary conditions instance
-        BC = PeriodicBoundaries(params=self.__supercellBC.get_vectors())
-        pdb.set_boundary_conditions(BC)
+        if isinstance(self.unitcellBC, PeriodicBoundaries):
+            BC = PeriodicBoundaries(params=self.__supercellBC.get_vectors())
+            pdb.set_boundary_conditions(BC)
         # return
         return pdb
 
