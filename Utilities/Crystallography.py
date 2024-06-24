@@ -272,16 +272,16 @@ class CrystalMaker(object):
                     raise Exception(f"Unable to parse '_cell_length_a' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_length_b'):
                 try:
-                    B = l[len('_cell_length_b'):].split('(')[0].strip()
-                    if B.lower() not in _infBC:
-                        B = float(B)
+                    V = l[len('_cell_length_b'):].split('(')[0].strip()
+                    if V.lower() not in _infBC:
+                        B = float(V)
                 except:
                     raise Exception(f"Unable to parse '_cell_length_b' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_length_c'):
                 try:
-                    C = l[len('_cell_length_c'):].split('(')[0].strip()
-                    if C.lower() not in _infBC:
-                        C = float(C)
+                    V = l[len('_cell_length_c'):].split('(')[0].strip()
+                    if V.lower() not in _infBC:
+                        C = float(V)
                 except:
                     raise Exception(f"Unable to parse '_cell_length_c' value '{V}', it must be a number of any of {sorted(_infBC)}")
             elif l.startswith('_cell_angle_alpha'):
@@ -787,7 +787,9 @@ class CrystalMaker(object):
             elif isinstance(unitcellBC, np.ndarray):
                 BC = PeriodicBoundaries(params=unitcellBC)
             elif isinstance(unitcellBC, (list, tuple)):
-                if len(unitcellBC) == 3:
+                if all([i is None for i in unitcellBC]):
+                    BC = InfiniteBoundaries()
+                elif len(unitcellBC) == 3:
                     BC = PeriodicBoundaries(params=unitcellBC)
                 else:
                     assert len(

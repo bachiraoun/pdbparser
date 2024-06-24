@@ -1925,15 +1925,26 @@ class pdbparser(object):
             if boundaryConditions is None:
                 if hasattr(self, "_boundaryConditions"):
                     bc = self._boundaryConditions
-            assert isinstance(bc, PeriodicBoundaries),"boundaryConditions must be None or PeriodicBoundaries."
-            # get boundary conditions
-            a      = bc.get_a()
-            b      = bc.get_b()
-            c      = bc.get_c()
-            alpha  = bc.get_alpha()*180/np.pi
-            beta   = bc.get_beta()*180/np.pi
-            gamma  = bc.get_gamma()*180/np.pi
-            coords = bc.real_to_box_array(self.coordinates)
+            #assert isinstance(bc, PeriodicBoundaries),"boundaryConditions must be None or PeriodicBoundaries."
+            ## get boundary conditions
+            #a      = bc.get_a()
+            #b      = bc.get_b()
+            #c      = bc.get_c()
+            #alpha  = bc.get_alpha()*180/np.pi
+            #beta   = bc.get_beta()*180/np.pi
+            #gamma  = bc.get_gamma()*180/np.pi
+            #coords = bc.real_to_box_array(self.coordinates)
+            if isinstance(bc, PeriodicBoundaries):
+                a      = "{v:.4f}(0)".format(v=bc.get_a())
+                b      = "{v:.4f}(0)".format(v=bc.get_b())
+                c      = "{v:.4f}(0)".format(v=bc.get_c())
+                alpha  = "{v:.4f}(0)".format(v=bc.get_alpha()*180/np.pi)
+                beta   = "{v:.4f}(0)".format(v=bc.get_beta()*180/np.pi)
+                gamma  = "{v:.4f}(0)".format(v=bc.get_gamma()*180/np.pi)
+                coords = bc.real_to_box_array(self.coordinates)
+            else:
+                a = b = c = alpha = beta = gamma = 'inf'
+                coords = self.coordinates
             # pdbAttributes
             _desc = ""
             if pdbAttributes:
@@ -1947,12 +1958,12 @@ class pdbparser(object):
             # start creating cif file
             header = """# This file is generated using pdbparser package{_desc}
 
-_cell_length_a                  {a:.4f}(0)
-_cell_length_b                  {b:.4f}(0)
-_cell_length_c                  {c:.4f}(0)
-_cell_angle_alpha               {alpha:.4f}(0)
-_cell_angle_beta                {beta:.4f}(0)
-_cell_angle_gamma               {gamma:.4f}(0)
+_cell_length_a                  {a}
+_cell_length_b                  {b}
+_cell_length_c                  {c}
+_cell_angle_alpha               {alpha}
+_cell_angle_beta                {beta}
+_cell_angle_gamma               {gamma}
 
 _space_group_name_H-M_alt       'P 1'
 
