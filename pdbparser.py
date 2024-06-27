@@ -125,7 +125,7 @@ def get_pdb_from_xyz(xyz, boundaryConditions=None):
                         lines.append(l)
         except Exception as err:
             raise Exception("Unable to read xyz file '%s' (%s)"%(xyz, err))
-    assert len(lines)>2, "Number of lines in xyz file must be >2"
+    assert len(lines)>=2, "Number of lines in xyz file must be >=2"
     # parse coments for boundary conditions
     if boundaryConditions is None:
         for c in comments:
@@ -143,14 +143,19 @@ def get_pdb_from_xyz(xyz, boundaryConditions=None):
     except Exception as err:
         raise Exception("xyz first uncommented line must be an integer indicating the number of atoms in the sytem")
     assert natoms>0, "xyz file first line must indicate the number of atoms to read and that must be >0. %s is found"%lines[0]
-    assert len(lines) == natoms+2, "xyz file number of atom lines must be indicated in first uncomment line and the number of effective lines must be equal to the found number of atoms +2"
+    if len(lines) == natoms+2:
+        start = 2
+    elif len(lines) == natoms+1:
+        start = 1
+    else:
+        raise Exception("xyz file number of atom lines must be indicated in first uncomment line and the number of effective lines must be equal to the found number of atoms +1 or +2")
     # create pdb records
     rec = copy.copy(__ATOM__)
     rec['residue_name'] = 'XYZ' # xyz molecule
     records = []
     seqNum  = 1
     segId   = '0'
-    for l in lines[2:]:
+    for l in lines[start:]:
         sl = l.split()
         assert len(sl) == 4, "wrong xyz file '%s'. Number of of items must be equal to 4"%l
         try:
