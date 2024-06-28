@@ -82,7 +82,7 @@ class CrystalMaker(object):
                                )
         self.__symOps = self.__get_symmetry_operations(symOps)
         self.__atoms = self.__get_atoms_definition(atoms, _allowOccupancy=_allowOccupancy)
-        self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC)
+        self.set_unitcell_boundary_conditions(unitcellBC=unitcellBC, _buildUnitcell=False)
         self.__build_unit_cell(_precision=_precision,
                                _checkPosition=_checkPosition,
                                _distance=_distance,
@@ -770,7 +770,7 @@ class CrystalMaker(object):
                 if 'segment_identifier' in atAttr:
                     self.__unitcellSegments[atIdx] = atAttr['segment_identifier']
 
-    def set_unitcell_boundary_conditions(self, unitcellBC):
+    def set_unitcell_boundary_conditions(self, unitcellBC, _buildUnitcell=True):
         """Set unitcell boundary conditions.
 
         :Parameters:
@@ -804,6 +804,11 @@ class CrystalMaker(object):
         # check symmetry ops
         if not isinstance(BC, PeriodicBoundaries):
             assert self.__symOps==[('x', 'y', 'z'),], "InfiniteBoundaries symmetry ops must be identity ops ('x', 'y', 'z')"
+        # _buildUnitcell
+        if _buildUnitcell is True:
+            _buildUnitcell = {}
+        if isinstance(_buildUnitcell, dict):
+            self.__build_unit_cell(**_buildUnitcell)
         # reset supercell
         self.__supercell          = None
         self.__supercellBC        = None
