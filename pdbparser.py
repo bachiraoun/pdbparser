@@ -189,6 +189,110 @@ def get_pdb_from_xyz(xyz, boundaryConditions=None):
 
 
 
+def get_pdb_from_mol(mol, boundaryConditions=None):
+    """read mol file or a list of mol lines and create pdbparser instance
+
+    :Parameters:
+        #. mol (string, list): list of mol file lines or mol file path
+        #. boundaryConditions (None, InfiniteBoundaries, PeriodicBoundaries,
+           numpy.ndarray, number): The configuration's boundary conditions.
+           If None, boundaryConditions will be parsed from pdb if existing
+           otherwise, InfiniteBoundaries with no periodic boundaries will
+           be set. If numpy.ndarray is given, it must be pass-able
+           to a PeriodicBoundaries instance. Normally any real
+           numpy.ndarray of shape (1,), (3,1), (9,1), (3,3) is allowed.
+           If number is given, it's like a numpy.ndarray of shape (1,),
+           it is assumed as a cubic box of box length equal to number.
+
+    :Returns:
+        #. pdb (pdbparser): pdbparser instance
+        #. messages (list): list of warning messages if any
+    """
+    # check https://www.nonlinear.com/progenesis/sdf-studio/v0.9/faq/sdf-file-format-guidance.aspx
+    messages = []
+    comments = []
+    if isinstance(mol, (list,tuple)):
+        for l in mol:
+            assert isinstance(l, basestring), "mol list items must be all strings"
+        lines = [l for l in mol]
+    else:
+        assert isinstance(mol, basestring), "mol must be a list or a string"
+        try:
+            assert os.path.isfile(mol), "Given mol file path '%s' is not found"%mol
+            with open(mol, "r") as fd:
+                lines = fd.readlines()
+        except Exception as err:
+            raise Exception("Unable to read mol file '%s' (%s)"%(mol, err))
+    # remove comments and empty lines
+    for li, l in enumerate(lines):
+        l = l.strip()
+        if not len(l) or l.startswith('#'):
+            comments.append(l)
+            continue
+        else:
+            break
+    lines = lines[li:]
+    # parse coments for boundary conditions
+    if boundaryConditions is None:
+        for c in comments:
+            if c.startswith('# Boundary Conditions:'):
+                bcVectors = c.split("# Boundary Conditions: ")[1].strip().split()
+                if not len(bcVectors)==9:
+                    messages.append("Wrong boundary conditions comment line is found '%s'. Comment line ignored"%c)
+                else:
+                    if boundaryConditions is not None:
+                        messages("multiple boundary conditions found. old value updated with '%s'"%c)
+                    boundaryConditions = np.array([float(item) for item in bcVectors])
+    # read mol file
+    assert len(lines)>5, "mol file must contain more than 5 lines"
+    moleName, softwareDetails, comment, counts = lines[:4]
+    # counts line is made up of twelve fixed-length fields -
+    # the first eleven are three characters long, and the last six characters long.
+    # The first two fields are the most critical, and give the number of atoms and bonds described in the compound.
+    try:
+        natoms, nbonds = counts.strip().split()[:2]
+        natoms = int(natoms)
+        assert natoms>0, ''
+        nbonds = int(nbonds)
+        assert len(lines)>4+natoms
+    except Exception as err:
+        raise Exception("The first two fields of counts line (row 4) must be integers indicating the number of atoms and bonds described in the compound.")
+    # read atoms
+    rec = copy.copy(__ATOM__)
+    rec['residue_name'] = 'XYZ' # xyz molecule
+    records = []
+    seqNum  = 1
+    segId   = '0'
+    for ri, r in enumerate(lines[4:4+natoms]):
+        try:
+            x,y,z,e = r.strip().split()[:4]
+            x = float(x)
+            y = float(y)
+            z = float(z)
+        except Exception as err:
+            raise Exception("Unable to parse atom '%s' at file row '%s'"%(ri,ri+4))
+        else:
+            rec   = copy.copy(rec)
+            rec['coordinates_x']      = x
+            rec['coordinates_y']      = y
+            rec['coordinates_z']      = z
+            rec['element_symbol']     = e
+            rec['atom_name']          = e
+            rec['sequence_number']    = seqNum
+            rec['segment_identifier'] = segId
+            records.append(rec)
+            seqNum += 1
+            if seqNum == 9999:
+                seqNum = 1
+                segId  = str(int(segId) + 1)
+    # create pdb
+    pdb = pdbparser()
+    pdb.set_boundary_conditions(boundaryConditions)
+    pdb.records = records
+    assert len(pdb), "mol returned an empty pdb"
+    return pdb, messages
+
+
 class pdbparser(object):
     """
     Initialize pdbparser instance
