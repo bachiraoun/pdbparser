@@ -331,7 +331,8 @@ def delete_records(indexes, pdb):
     This method is meant to assure the models definitions are correct.
     """
     # to keep records indexes
-    indexes = set([idx for idx in range(len(pdb.records)) if idx not in indexes])
+    setIdx  = set(indexes)
+    indexes = set([idx for idx in range(len(pdb.records)) if idx not in setIdx])
     indexes = sorted(indexes)
 
     # check and pop models
@@ -342,11 +343,12 @@ def delete_records(indexes, pdb):
 
     # correct models range
     for model in pdb.models.values():
-        model_start = model["model_start"]
-        model_range = model["model_end"] - model_start
-        model["model_start"] = indexes.index(model_start)
-        model["model_end"] = model["model_start"]+model_range
-        model["termodel"]["INDEX_IN_RECORDS"] = model["model_end"]
+        modelStart = model["model_start"]
+        modelRange = model["model_end"] - modelStart
+        model["model_start"] = indexes.index(modelStart)
+        model["model_end"] = model["model_start"]+modelRange
+        if model['termodel'] is not None:
+            model["termodel"]["INDEX_IN_RECORDS"] = model["model_end"]
 
     # check and pop or correct pdb.ter
     for key in pdb.ter.keys():

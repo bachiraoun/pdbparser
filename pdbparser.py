@@ -2170,7 +2170,8 @@ _atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma,_desc
             pdbCopy.records = [pdbCopy.records[idx] for idx in indexes]
         else:
             # invert indexes
-            indexes = [idx for idx in self.indexes if idx not in indexes]
+            setIdx  = set(indexes)
+            indexes = [idx for idx in self.indexes if idx not in setIdx]
             delete_records(indexes, pdbCopy)
         # return pdb
         return pdbCopy
