@@ -351,8 +351,9 @@ def delete_records(indexes, pdb):
             model["termodel"]["INDEX_IN_RECORDS"] = model["model_end"]
 
     # check and pop or correct pdb.ter
+    setIdx = set(indexes)
     for key in pdb.ter.keys():
-        if pdb.ter[key]["INDEX_IN_RECORDS"] not in indexes:
+        if pdb.ter[key]["INDEX_IN_RECORDS"] not in setIdx:
             pdb.ter.pop(key)
         else:
             ter = copy.deepcopy(pdb.ter[key])
@@ -365,7 +366,7 @@ def delete_records(indexes, pdb):
     reset_models_serial_number(pdb)
 
     # delete records
-    pdb.records = [pdb.records[idx] for idx in indexes]
+    pdb.records = [pdb.records[idx] for idx in setIdx]
 
 
 def shake_models(pdb, models_keys = None, threshold = None, intensity_ratio = None):
