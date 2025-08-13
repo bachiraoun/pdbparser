@@ -789,7 +789,8 @@ class AmorphousSystem(Construct):
         for pdbIndex in list(reversed(self.pdbsIndexesNumberOfAtomsSorted)):
 
             minMax = get_min_max(self.pdbs[pdbIndex].indexes, self.pdbs[pdbIndex])
-            margin = np.int( np.ceil(np.max( [minMax[1]-minMax[0], minMax[3]-minMax[2], minMax[5]-minMax[4]])+self.interMolecularMinimumDistance) )
+            #margin = np.int( np.ceil(np.max( [minMax[1]-minMax[0], minMax[3]-minMax[2], minMax[5]-minMax[4]])+self.interMolecularMinimumDistance) )
+            margin = int(np.ceil(np.max([minMax[1] - minMax[0], minMax[3] - minMax[2], minMax[5] - minMax[4]]) + self.interMolecularMinimumDistance))
             Logger.info("Adding %r %r pdb of records length %r. margin set to %r"%(insertionDict[pdbIndex], self.pdbs[pdbIndex].name, self.pdbsNumberofAtomsDict[pdbIndex], margin))
 
             for molNum in range(insertionDict[pdbIndex]):

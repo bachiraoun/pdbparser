@@ -561,14 +561,17 @@ class CenterDefinition(Definition):
         :returns:
             #. center (numpy.array): the center
         """
+        cenDef = list(self.definition.keys())[0]
         # fixed center definition
-        if list(self.definition.keys())[0] == "fixed":
+        if cenDef == "fixed":
             return list(self.definition.values())[0]
         # selection center definition
-    elif list(self.definition.keys())[0] == "selection":
+        elif cenDef == "selection":
             indexes = list(self.definition.values())[0]["indexes"]
             weights = list(self.definition.values())[0]["weights"]
             return  np.sum(weights*np.transpose(coordinates[indexes,:]),1)/len(indexes)
+        else:
+            raise Logger.error("center definition '%s' not valid"%cenDef)
 
 class AxisDefinition(Definition):
     def __init__(self, trajectory, definition):
