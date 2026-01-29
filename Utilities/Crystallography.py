@@ -30,6 +30,7 @@ class CrystalMaker(object):
         #. atoms (atoms): list of tuples where every tuple contains the
            atom element name, x,y,z coordinates and a optional occupancy.
            if an atom occupancy is missing it's then considered to be 1
+           if an atom name is missing it's automatically set during construction as the element and number
         #. unitcellBC (list, numpy.ndarray, pdbparser.Utilities.BoundaryConditions.PeriodicBoundaries):
            unitcell boundary conditions instance or parameters defining the
            unitcell size and shape. When a list of parameters is given, it can
@@ -617,12 +618,14 @@ class CrystalMaker(object):
         for idx, item in enumerate(atoms):
             assert isinstance(item, (list, tuple)), "atoms item must be a tuple. Item index %i is not" % idx
             item = list(item)
-            if len(item) == 5:
+            if len(item) == 4:
+                item = [item[0], None, item[1], item[2], item[3], 1.0]
+            elif len(item) == 5:
                 if isinstance(item[1], str):
                     item = [item[0], item[1], item[2], item[3], item[4], 1.0]
                 else:
                     item = [item[0], None, item[1], item[2], item[3], item[4]]
-            assert len(item) == 6, "atoms item tuple must have 5 or 6 items. Item index %i is not" % idx
+            assert len(item) == 6, "atoms item tuple must have 4, 5 or 6 items. Item index %i is not" % idx
             assert isinstance(item[0], str), "atoms item tuple first item (element) must be string. Item index %i is not" % idx
             assert 1 <= len(item[0]) <= 2, "atoms item tuple first item (element) string must be of length 1 or 2. Item index %i is not" % idx
             assert is_element(item[0]), "Given atom element '%s' is not found in database" % (item[0],)
@@ -1083,7 +1086,7 @@ class CrystalMaker(object):
         if isinstance(self.unitcellBC, PeriodicBoundaries):
             assert self.__supercell is not None, "supercell is not defined"
             # normalize box coordinates
-            boxCoords = copy.deepcopy(self.__supercellBoxCoords)
+            boxCoords = copy.deepcopy(self.__supercellBoxCoords).astype(float)
             boxCoords[:, 0] /= float(self.__supercell[0])
             boxCoords[:, 1] /= float(self.__supercell[1])
             boxCoords[:, 2] /= float(self.__supercell[2])
