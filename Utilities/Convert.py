@@ -465,7 +465,7 @@ class RMCplusplus(Convert):
                 assert "name" in types[idx], "every type dictionary must have 'name' and 'element' keys"
                 assert "element" in types[idx], "every type dictionary must have 'name' and 'element' keys"
                 if types[idx]["element"].lower() not in __atoms_database__.keys():
-                    Logger.warr("type %r is not defined in database"%types[idx]["element"])
+                    Logger.warn("type %r is not defined in database"%types[idx]["element"])
                 else:
                     types[idx]["element"] = types[idx]["element"].lower()
             self.info["types"] = types
