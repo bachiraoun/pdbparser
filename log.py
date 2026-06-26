@@ -45,14 +45,15 @@ class _Logger(object):
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = object.__new__(cls)
+            object.__setattr__(cls._instance, '_isInitialized', False)
         return cls._instance
 
     def __init__(self, name):
-        # guard against re-initialization on repeated _Logger() calls
-        if 'logger' in object.__getattribute__(self, '__dict__'):
+        if self._isInitialized:
             return
         object.__setattr__(self, 'logger', LOG(name=name))
         self.logger.set_log_file_basename(os.path.join(os.getcwd(), "pdbparser"))
+        self._isInitialized = True
 
     def set_logger(self, loggerInstance):
         """
@@ -69,7 +70,7 @@ class _Logger(object):
         return getattr(object.__getattribute__(self, 'logger'), name)
 
     def __setattr__(self, name, value):
-        if name == 'logger':
+        if name in ('logger', '_isInitialized'):
             object.__setattr__(self, name, value)
         else:
             setattr(object.__getattribute__(self, 'logger'), name, value)
