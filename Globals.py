@@ -38,10 +38,15 @@ class Preferences(PREF):
                     if not len(files):
                         exePath = None
                 if exePath is not None:
-                    exePath = os.path.join(exePath, files[0], 'Contents', 'vmd')
-                    files = [fname for fname in os.listdir(exePath) if 'vmd_MACOS' in fname]
-                    if not len(files):
-                        exePath = None
+                    exePath = os.path.join(exePath, files[0])
+                    if not os.path.isfile(exePath):
+                        exePath = os.path.join(exePath, 'Contents', 'vmd')
+                        if os.path.isdir(exePath):
+                            files = [fname for fname in os.listdir(exePath) if 'vmd_MACOS' in fname]
+                            if not len(files):
+                                exePath = None
+                        else:
+                            exePath = None
                 if exePath is not None:
                     exePath = os.path.join(exePath, files[0])
                 prefs["VMD_PATH"] = exePath
