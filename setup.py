@@ -200,7 +200,7 @@ metadata = dict(name = PACKAGE_NAME,
                 classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
                 platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
                 # Dependent packages (distributions)
-                install_requires=['pysimplelog','pypref'], # it also needs numpy, but this is left for the user to install.
+                install_requires=['pysimplelog>=6.0.0,<7','pypref'], # it also needs numpy, but this is left for the user to install.
                 setup_requires=[''],
                 zip_safe=False,
                 )
