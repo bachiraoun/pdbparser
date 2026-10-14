@@ -151,14 +151,14 @@ class HydrogenBonds(Analysis):
         try:
             bondLength=float(bondLength)
         except:
-            raise Logger.error("bondLength must be positive number")
+            raise Exception(Logger.error("bondLength must be positive number"))
         assert bondLength>0.5, Logger.error("bondLength must be bigger than 0.5")
         self.bondLength=bondLength
         # set thresholdTime
         try:
             thresholdTime=float(thresholdTime)
         except:
-            raise Logger.error("thresholdTime must be a number")
+            raise Exception(Logger.error("thresholdTime must be a number"))
         assert bondLength>=0, Logger.error("thresholdTime must be a positive number")
         self.thresholdTime=thresholdTime
         # set bondAngleLimits
@@ -167,7 +167,7 @@ class HydrogenBonds(Analysis):
         try:
             bondAngleLimits= sorted([float(bondAngleLimits[0]),float(bondAngleLimits[1])])
         except:
-            raise Logger.error("bondAngleLimits must be a list of positive 2 floats")
+            raise Exception(Logger.error("bondAngleLimits must be a list of positive 2 floats"))
         assert bondAngleLimits[0]>=0, Logger.error("bondAngleLimits items must be a positive number")
         assert bondAngleLimits[1]<=180, Logger.error("bondAngleLimits items must be smaller than 180")
         self.bondAngleLimits=bondAngleLimits
@@ -175,7 +175,7 @@ class HydrogenBonds(Analysis):
         try:
             belowAngleToleranceTime=float(belowAngleToleranceTime)
         except:
-            raise Logger.error("belowAngleToleranceTime must be a number")
+            raise Exception(Logger.error("belowAngleToleranceTime must be a number"))
         assert belowAngleToleranceTime>0, Logger.error("bondAngleLimits must be bigger than 0")
         self.belowAngleToleranceTime=belowAngleToleranceTime
         # set tolerance shells and time
@@ -191,11 +191,11 @@ class HydrogenBonds(Analysis):
         try:
             toleranceShells = [float(item) for item in toleranceShells]
         except:
-            raise Logger.error("toleranceShells must be a list of float positive numbers")
+            raise Exception(Logger.error("toleranceShells must be a list of float positive numbers"))
         try:
             toleranceTime = [float(item) for item in toleranceTime]
         except:
-            raise Logger.error("toleranceTime must be a list of numbers")
+            raise Exception(Logger.error("toleranceTime must be a list of numbers"))
         assert len(toleranceShells)==sum([1 for item in toleranceShells if item>=0]), Logger.error("toleranceShells must be a list of float positive numbers")
         assert len(toleranceTime)==sum([1 for item in toleranceTime if item>=0]), Logger.error("toleranceTime must be a list of float positive numbers")
         self.toleranceShells = []
@@ -224,7 +224,7 @@ class HydrogenBonds(Analysis):
         try:
             bin=float(bin)
         except:
-            raise Logger.error("bin must be positive number")
+            raise Exception(Logger.error("bin must be positive number"))
         assert bin>0, Logger.error("bin must be non-zero positive number")
         assert bin<=1, Logger.error("bin must be smaller than 1 Angstrom")
         self.bin=bin

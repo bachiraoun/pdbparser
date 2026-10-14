@@ -138,7 +138,7 @@ def get_coordinates(indexes, pdb):
     elif pdb.__class__.__name__ == "pdbTrajectory":
         return pdb.coordinates[indexes,:]
     else:
-        raise Logger.error("pdb must be a pdbparser or pdbTrajectory instance")
+        raise Exception(Logger.error("pdb must be a pdbparser or pdbTrajectory instance"))
 
 
 def get_records_indexes_by_models_keys(pdb, keys):

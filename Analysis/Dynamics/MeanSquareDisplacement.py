@@ -158,7 +158,7 @@ class MeanSquareDisplacementInCylinder(Analysis):
         try:
             self.histBin = float(histBin)
         except:
-            raise Logger.error("histBin must be number convertible. %s is given."%histBin)
+            raise Exception(Logger.error("histBin must be number convertible. %s is given."%histBin))
         assert self.histBin%1 == 0, logger.error("histBin must be integer. %s is given."%histBin)
         assert self.histBin>0, logger.error("histBin must be positive. %s is given."%histBin)
         assert self.histBin<len(self.configurationsIndexes), logger.error("histBin must smaller than numberOfConfigurations")

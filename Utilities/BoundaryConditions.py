@@ -104,75 +104,75 @@ class InfiniteBoundaries(object):
         into periodic boundary conditions atomic images.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'maximum length' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'maximum length' is ambiguous"))
 
     def get_minimum_needed_supercell(self, maxDist, index=-1):
         """ Get needed supercell size to cover maxDist.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'supercell' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'supercell' is ambiguous"))
 
     def get_vectors(self, index = -1):
         """
         Get the basis (3,3) array vectors of the box at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'vectors definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'vectors definition' is ambiguous"))
 
     def get_a(self, index = -1):
         """
         Get a the first vector length.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'a definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'a definition' is ambiguous"))
 
     def get_b(self, index = -1):
         """
         Get b the second vector length.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'b definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'b definition' is ambiguous"))
 
     def get_c(self, index = -1):
         """
         Get c the second vector length.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'c definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'c definition' is ambiguous"))
 
     def get_angles(self, index = -1):
         """
         Get the basis alpha(b,c), beta(c,a), gamma(a,b) angles in rad at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'angles definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'angles definition' is ambiguous"))
 
     def get_alpha(self, index = -1):
         """
         returns alpha(b,c) angle in rad at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'alpha definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'alpha definition' is ambiguous"))
 
     def get_beta(self, index = -1):
         """
         returns beta(c,a) angle in rad at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'beta definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'beta definition' is ambiguous"))
 
     def get_gamma(self, index = -1):
         """
         returns gamma(a,b) angle in rad at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'gamma definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'gamma definition' is ambiguous"))
 
     def get_cell_shape(self, _precision=1e-5):
         """
         get cell shape also known as crystal class from boundary conditions
         """
-        raise Logger.error("Infinite universe 'get_cell_shape definition' is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'get_cell_shape definition' is ambiguous"))
 
     def get_crystal_class(self, *args, **kwargs):
         """alias to get_cell_shape"""
@@ -183,14 +183,14 @@ class InfiniteBoundaries(object):
         returns the basis (3,3) array reciprocal vectors of the box at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'reciprocal vectors' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'reciprocal vectors' definition is ambiguous"))
 
     def get_box_volume(self, index = -1):
         """
         returns the volume of the box at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'box volume' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'box volume' definition is ambiguous"))
 
     def get_box_real_center(self, index = -1):
         """
@@ -204,25 +204,25 @@ class InfiniteBoundaries(object):
         returns the reciprocal volume of the box at time index.
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'reciprocal box volume' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'reciprocal box volume' definition is ambiguous"))
 
     def real_to_box_array(self, realArray, index = -1):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'real to box' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'real to box' definition is ambiguous"))
 
     def box_to_real_array(self, boxArray, index = -1):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'box to real' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'box to real' definition is ambiguous"))
 
     def fold_box_array(self, boxArray):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'box array' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'box array' definition is ambiguous"))
 
     def fold_real_array(self, realArray, index = -1):
         """
@@ -237,7 +237,7 @@ class InfiniteBoundaries(object):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'box array' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'box array' definition is ambiguous"))
 
     def get_contiguous_real_array(self, realArray, index = -1):
         """
@@ -252,7 +252,7 @@ class InfiniteBoundaries(object):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'box difference' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'box difference' definition is ambiguous"))
 
     def real_difference(self, realVector, realArray, index = -1):
         """
@@ -268,7 +268,7 @@ class InfiniteBoundaries(object):
         """
         For InfiniteBoundaries calling this method will raise an error.
         """
-        raise Logger.error("Infinite universe 'box distance' definition is ambiguous")
+        raise Exception(Logger.error("Infinite universe 'box distance' definition is ambiguous"))
 
     def real_distance(self, realVector, realArray, index = -1):
         """
@@ -1018,7 +1018,7 @@ class BoundaryConditions(object):
         elif len(a) ==3:
             self.__a = np.array([float(a[0]), float(a[1]), float(a[2])])
         else:
-            raise pdbparser.Logger.error( "'a' should be a float or a three dimensions vector")
+            raise Exception(pdbparser.Logger.error( "'a' should be a float or a three dimensions vector"))
 
     def __set_b__(self, b):
         if len(b) == 1:
@@ -1027,7 +1027,7 @@ class BoundaryConditions(object):
         elif len(b) == 3:
             self.__b = np.array([float(b[0]), float(b[1]), float(b[2])])
         else:
-            raise pdbparser.Logger.error( "'b' should be a float or a three dimensions vector")
+            raise Exception(pdbparser.Logger.error( "'b' should be a float or a three dimensions vector"))
 
     def __set_c__(self, c):
         if len(c) == 1:
@@ -1036,7 +1036,7 @@ class BoundaryConditions(object):
         elif len(c) == 3:
             self.__c = np.array([float(c[0]), float(c[1]), float(c[2])])
         else:
-           raise pdbparser.Logger.error( "'c' should be a float or a three dimensions vector")
+           raise Exception(pdbparser.Logger.error( "'c' should be a float or a three dimensions vector"))
 
     @property
     def vectors(self):

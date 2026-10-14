@@ -78,7 +78,7 @@ def get_superposition_transformation_elements(weights, totalWeight, refArray, ar
     try:
         totalWeight = float(totalWeight)
     except:
-        raise Logger.error("totalWeight must be a number")
+        raise Exception(Logger.error("totalWeight must be a number"))
     assert totalWeight>0, Logger.error("totalWeight must be a strictly positive number")
     # calculate center of mass of array
     a = array[:,0]*weights

@@ -57,7 +57,7 @@ class CylindricalRadialDensity(Analysis):
         try:
             radii = np.array(sorted(set(radii)), dtype=float)
         except:
-            raise Logger.error("radii element must be numbers")
+            raise Exception(Logger.error("radii element must be numbers"))
         assert len(radii.shape)==1, Logger.error("radii must be uni-dimensional")
         assert radii[0]>0, Logger.error("all radii array must be positive")
         self.radii = radii
@@ -65,7 +65,7 @@ class CylindricalRadialDensity(Analysis):
         try:
             length = float(length)
         except:
-            raise Logger.error("length must be numbers")
+            raise Exception(Logger.error("length must be numbers"))
         assert length>0, Logger.error("length must be positive")
         self.length = length
         # cylinder volume
@@ -233,14 +233,14 @@ class CylindricalDiskDensity(Analysis):
         try:
             lengths = np.array(sorted(set(lengths)), dtype=float)
         except:
-            raise Logger.error("lengths element must be numbers")
+            raise Exception(Logger.error("lengths element must be numbers"))
         assert len(lengths.shape)==1, Logger.error("lengths must be uni-dimensional")
         self.lengths = lengths
         # set radius
         try:
             radius = float(radius)
         except:
-            raise Logger.error("radius must be numbers")
+            raise Exception(Logger.error("radius must be numbers"))
         assert radius>0, Logger.error("radius must be positive")
         self.radius = radius
         # cylinder volume

@@ -60,7 +60,7 @@ class BuildAtomsCluster(Analysis):
             #. stepData (object): object used in combine method
         """
         if not isinstance(self._trajectory._boundaryConditions, PeriodicBoundaries):
-            raise Logger.error("rebuild cluster is not possible with infinite boundaries trajectory")
+            raise Exception(Logger.error("rebuild cluster is not possible with infinite boundaries trajectory"))
 
         # get configuration index
         confIdx = self.configurationsIndexes[index]

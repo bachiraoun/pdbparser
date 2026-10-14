@@ -273,13 +273,13 @@ class Connectivity(object):
         try:
             fd = open(filePath, 'w')
         except:
-            raise Logger.error( "cannot open file %r for writing" %filePath)
+            raise Exception(Logger.error( "cannot open file %r for writing" %filePath))
 
         if format is "NAMD_PSF":
             self.__NAMD_PSF_export_atoms__(fd, indexesOffset = indexesOffset)
         else:
             fd.close()
-            raise Logger.error( "format %r is not defined" %format)
+            raise Exception(Logger.error( "format %r is not defined" %format))
         # close file
         if closeFile:
             fd.close()
@@ -297,14 +297,14 @@ class Connectivity(object):
         try:
             fd = open(filePath, 'w')
         except:
-            raise Logger.error( "cannot open file %r for writing" %filePath)
+            raise Exception(Logger.error( "cannot open file %r for writing" %filePath))
         if format is "NAMD_PSF":
             self.__NAMD_PSF_export_bonds__(fd, indexesOffset = indexesOffset)
         elif format is "NAMD_TOP":
             self.__NAMD_TOP_export_bonds__(fd, key = key)
         else:
             fd.close()
-            raise Logger.error( "format %r is not defined" %format)
+            raise Exception(Logger.error( "format %r is not defined" %format))
         # close file
         if closeFile:
             fd.close()
@@ -322,7 +322,7 @@ class Connectivity(object):
         try:
             fd = open(filePath, 'w')
         except:
-            raise Logger.error( "cannot open file %r for writing" %filePath)
+            raise Exception(Logger.error( "cannot open file %r for writing" %filePath))
 
         if format is "NAMD_PSF":
             self.__NAMD_PSF_export_angles__(fd, indexesOffset = indexesOffset)
@@ -330,7 +330,7 @@ class Connectivity(object):
             self.__NAMD_TOP_export_angles__(fd, key = key)
         else:
             fd.close()
-            raise Logger.error( "format %r is not defined" %format )
+            raise Exception(Logger.error( "format %r is not defined" %format ))
 
         # close file
         if closeFile:
@@ -349,14 +349,14 @@ class Connectivity(object):
         try:
             fd = open(filePath, 'w')
         except:
-            raise Logger.error( "cannot open file %r for writing" %filePath)
+            raise Exception(Logger.error( "cannot open file %r for writing" %filePath))
         if format is "NAMD_PSF":
             self.__NAMD_PSF_export_dihedrals__(fd, indexesOffset = indexesOffset)
         elif format is "NAMD_TOP":
             self.__NAMD_TOP_export_dihedrals__(fd, key = key)
         else:
             fd.close()
-            raise Logger.error( "format %r is not defined" %format)
+            raise Exception(Logger.error( "format %r is not defined" %format))
         # close file
         if closeFile:
             fd.close()

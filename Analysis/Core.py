@@ -45,7 +45,7 @@ class Analysis(object):
         elif isinstance(self._trajectory, pdbTrajectory):
             return self._trajectory._structure
         else:
-            raise Logger.error("trajectory must be a pdbparser or pdbTrajectory instance")
+            raise Exception(Logger.error("trajectory must be a pdbparser or pdbTrajectory instance"))
 
     @property
     def time(self):
@@ -54,7 +54,7 @@ class Analysis(object):
         elif isinstance(self._trajectory, pdbTrajectory):
             return self._trajectory._time
         else:
-            raise Logger.error("trajectory must be a pdbparser or pdbTrajectory instance")
+            raise Exception(Logger.error("trajectory must be a pdbparser or pdbTrajectory instance"))
 
     @property
     def numberOfConfigurations(self):
@@ -63,7 +63,7 @@ class Analysis(object):
         elif isinstance(self._trajectory, pdbTrajectory):
             return len(self._trajectory)
         else:
-            raise Logger.error("trajectory must be a pdbparser or pdbTrajectory instance")
+            raise Exception(Logger.error("trajectory must be a pdbparser or pdbTrajectory instance"))
 
     @property
     def numberOfAtoms(self):
@@ -72,7 +72,7 @@ class Analysis(object):
         elif isinstance(self._trajectory, pdbTrajectory):
             return self._trajectory.numberOfAtoms
         else:
-            raise Logger.error("trajectory must be a pdbparser or pdbTrajectory instance")
+            raise Exception(Logger.error("trajectory must be a pdbparser or pdbTrajectory instance"))
 
     def get_trajectory_indexes(self, indexes):
         """
@@ -159,7 +159,7 @@ class Analysis(object):
         :Parameters:
             #. index (int): the step index
         """
-        raise Logger.error("step method is not implemented")
+        raise Exception(Logger.error("step method is not implemented"))
 
     def combine(self, index, stepData):
         """
@@ -219,7 +219,7 @@ class Analysis(object):
             elif f == "bin":
                 self.__save_binary__(str(path)+".pkl")
             else:
-                raise Logger.error("Unknown saving format %r. only %s formats are acceptable" %(f,["ascii","bin",'datasheet']))
+                raise Exception(Logger.error("Unknown saving format %r. only %s formats are acceptable" %(f,["ascii","bin",'datasheet'])))
         return self
 
     def load(self, paths, format=None):
@@ -302,12 +302,12 @@ class Analysis(object):
         for key in keys:
             resSize = np.sum(self.results[key].shape)
             if len(self.results[key].shape)>1:
-                raise Logger.error("result %r is of dimension %s, only one dimensional results can be saved to datasheet. Try using other formats." %(key,self.results[key].shape))
+                raise Exception(Logger.error("result %r is of dimension %s, only one dimensional results can be saved to datasheet. Try using other formats." %(key,self.results[key].shape)))
             else:
                 if resultsLength is None:
                     resultsLength = resSize
                 elif resSize != resultsLength:
-                    raise Logger.error("All results must have the same size.")
+                    raise Exception(Logger.error("All results must have the same size."))
         resultsArray = np.empty((resultsLength,len(keys)))
         for idx in range(len(keys)):
             resultsArray[:,idx] = self.results[keys[idx]]
@@ -326,12 +326,12 @@ class Analysis(object):
             try:
                 os.makedirs(tempDir)
             except:
-                raise Logger.error("Couldn't create temporary folder %r to extract data" %tempDir)
+                raise Exception(Logger.error("Couldn't create temporary folder %r to extract data" %tempDir))
         # open zipfile
         try:
             zf = zipfile.ZipFile(path, 'r')
         except:
-            raise Logger.error("Couldn't open analysis ascii zip file %r." %path)
+            raise Exception(Logger.error("Couldn't open analysis ascii zip file %r." %path))
 
         # get files names and extract them all to tempDir
         files = zf.namelist()
@@ -348,13 +348,13 @@ class Analysis(object):
         try:
             fd = open(path,'r')
         except:
-            raise Logger.error("Couldn't open analysis binary file %r." %path)
+            raise Exception(Logger.error("Couldn't open analysis binary file %r." %path))
         # read file
         try:
             resDict = pickle.load(fd)
         except:
             fd.close()
-            raise Logger.error("Couldn't read analysis binary file data %r." %path)
+            raise Exception(Logger.error("Couldn't read analysis binary file data %r." %path))
         else:
             fd.close()
             for key, values in resDict.items():
@@ -367,22 +367,22 @@ class Analysis(object):
         try:
             fd = open(path,'r')
         except:
-            raise Logger.error("Couldn't open analysis file %r." %path)
+            raise Exception(Logger.error("Couldn't open analysis file %r." %path))
         # read keys
         firstLine = fd.readline()
         fd.close()
         try:
             keys = [key.strip() for key in firstLine.split('#')[1].split(';')]
         except:
-            raise Logger.error("Couldn't read the 'first line' from analysis datasheet file %r first line." %path)
+            raise Exception(Logger.error("Couldn't read the 'first line' from analysis datasheet file %r first line." %path))
         # read values
         try:
             values = np.loadtxt(path, delimiter = ";")
         except:
-            raise Logger.error("Couldn't read the 'data' from analysis datasheet file %r." %path)
+            raise Exception(Logger.error("Couldn't read the 'data' from analysis datasheet file %r." %path))
         # test size
         if values.shape[1] != len(keys):
-            raise Logger.error("values and keys length doesn't match, datasheet file %r seems corrupted." %path)
+            raise Exception(Logger.error("values and keys length doesn't match, datasheet file %r seems corrupted." %path))
         # update results
         for idx in range(len(keys)):
             key = keys[idx]
@@ -395,7 +395,7 @@ class Analysis(object):
         try:
             fd = open(path,'r')
         except:
-            raise Logger.error("Couldn't open analysis file %r." %path)
+            raise Exception(Logger.error("Couldn't open analysis file %r." %path))
         # read lines
         lines = fd.readlines()
         fd.close()
@@ -406,7 +406,7 @@ class Analysis(object):
             if "dimensions:" == line:
                 break
         if not len(lines):
-            raise Logger.error("Couldn't find the data dimensions in cdl file %r"%path)
+            raise Exception(Logger.error("Couldn't find the data dimensions in cdl file %r"%path))
         dimensions = {}
         while lines:
             line = lines.pop(0).strip()
@@ -436,7 +436,7 @@ class Analysis(object):
             if "data:" == line:
                 break
         if not len(lines):
-            raise Logger.error("Couldn't find the data start in cdl file %r"%path)
+            raise Exception(Logger.error("Couldn't find the data start in cdl file %r"%path))
         # get data
         dataName = None
         dataVar = []
@@ -454,7 +454,7 @@ class Analysis(object):
                 try:
                     var = [float(d) for d in line.split(",") if len(d)]
                 except:
-                    raise Logger.error("Couldn't convert data line %r"%line)
+                    raise Exception(Logger.error("Couldn't convert data line %r"%line))
                 dataVar.extend( var )
                 assert self.results[dataName] == len(dataVar), "length of data found and variable %s dimension %s don't match"%(dataName,self.results[dataName])
                 self.results[dataName] = np.array(dataVar)
@@ -465,7 +465,7 @@ class Analysis(object):
                 try:
                     var = [float(d) for d in line.split(",") if len(d)]
                 except:
-                    raise Logger.error("Couldn't convert data line %r"%line)
+                    raise Exception(Logger.error("Couldn't convert data line %r"%line))
                 dataVar.extend( var )
             # beginning of variable
             else:
@@ -494,7 +494,7 @@ class Definition(object):
         return self.__trajectory
 
     def get_definition(self):
-         raise Logger.error("This method must be overloaded")
+         raise Exception(Logger.error("This method must be overloaded"))
 
 
 class CenterDefinition(Definition):
@@ -536,7 +536,7 @@ class CenterDefinition(Definition):
             try:
                 value = np.array([float(val) for val in value])
             except:
-                raise Logger.error("fixed center value must be a list of three floats")
+                raise Exception(Logger.error("fixed center value must be a list of three floats"))
         # selection center
         elif key == "selection":
             assert isinstance(value, dict), Logger.error("selection value must be a dictionary")
@@ -548,7 +548,7 @@ class CenterDefinition(Definition):
             weights = np.array([get_element_property(elements[idx], weighting) for idx in indexes])
             value = {"indexes":indexes, "weighting":weighting, "weights":weights}
         else:
-            raise Logger.error("center definition not valid")
+            raise Exception(Logger.error("center definition not valid"))
         return {key:value}
 
     def get_center(self, coordinates):
@@ -571,7 +571,7 @@ class CenterDefinition(Definition):
             weights = list(self.definition.values())[0]["weights"]
             return  np.sum(weights*np.transpose(coordinates[indexes,:]),1)/len(indexes)
         else:
-            raise Logger.error("center definition '%s' not valid"%cenDef)
+            raise Exception(Logger.error("center definition '%s' not valid"%cenDef))
 
 class AxisDefinition(Definition):
     def __init__(self, trajectory, definition):
@@ -617,7 +617,7 @@ class AxisDefinition(Definition):
             try:
                 value = [np.array(item, dtype=float) for item in value if len(item)==3]
             except:
-                raise Logger.error("every vector axis point coordinates must be a list of three numbers")
+                raise Exception(Logger.error("every vector axis point coordinates must be a list of three numbers"))
             else:
                 X = value[1]-value[0]
                 norm = np.linalg.norm(X)
@@ -642,11 +642,11 @@ class AxisDefinition(Definition):
             try:
                 value = [get_atoms_indexes(self.trajectory, item) for item in value]
             except:
-                raise Logger.error("every axis selection value must be a list of atoms indexes")
+                raise Exception(Logger.error("every axis selection value must be a list of atoms indexes"))
             else:
                 assert len([list(item) for item in value if len(item)])==2, Logger.error("none of both axis selection values can return and empty atoms indexes")
         else:
-            raise Logger.error("axis definition not valid")
+            raise Exception(Logger.error("axis definition not valid"))
         return {key:value}
 
     def get_center_rotationMatrix(self, coordinates):

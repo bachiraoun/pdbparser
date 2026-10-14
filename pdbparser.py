@@ -1333,7 +1333,7 @@ class pdbparser(object):
             #. supercell (tuple): defines how big of a supercell is needed
         """
         if not isinstance(self._boundaryConditions, PeriodicBoundaries):
-            raise Logger.error("contiguous configuration is not possible with infinite boundaries trajectory")
+            raise Exception(Logger.error("contiguous configuration is not possible with infinite boundaries trajectory"))
         if isinstance(supercell, (list,tuple)):
             assert len(supercell) == 3, LOGGER.error("@optimizer[{on}] {nm} list must have 3 items".format(on=self.__name, nm=_name))
         else:
@@ -1476,15 +1476,15 @@ class pdbparser(object):
         """
 
         if not isinstance(self._boundaryConditions, PeriodicBoundaries):
-            raise Logger.error("contiguous configuration is not possible with infinite boundaries trajectory")
+            raise Exception(Logger.error("contiguous configuration is not possible with infinite boundaries trajectory"))
         # check group
         if isinstance(group, (list, set, tuple)):
             group = list(group)
             for g in group:
                 if not g in self.records[0]:
-                    raise Logger.error("group item %s argument must be a valid pdbparser record key"%g)
+                    raise Exception(Logger.error("group item %s argument must be a valid pdbparser record key"%g))
         elif not group in  self.records[0]:
-            raise Logger.error("argument group %s must be a valid pdbparser record key"%group)
+            raise Exception(Logger.error("argument group %s must be a valid pdbparser record key"%group))
         else:
             group = [group]
         # get box coordinates
@@ -1868,7 +1868,7 @@ class pdbparser(object):
                     from io import StringIO
                     fd = StringIO()
             except:
-                raise Logger.error( "cannot open file %r for writing" %outputPath)
+                raise Exception(Logger.error( "cannot open file %r for writing" %outputPath))
             # check coordinates
             if coordinates is not None:
                 assert isinstance(coordinates, np.ndarray), "coordinates must be numpy array instance"
@@ -1938,7 +1938,7 @@ class pdbparser(object):
                     from io import StringIO
                     fd = StringIO()
             except:
-                raise Logger.error( "cannot open file %r for writing" %outputPath)
+                raise Exception(Logger.error( "cannot open file %r for writing" %outputPath))
             # check coordinates
             if coordinates is not None:
                 assert isinstance(coordinates, np.ndarray), "coordinates must be numpy array instance"
@@ -2021,7 +2021,7 @@ class pdbparser(object):
                     from io import StringIO
                     fd = StringIO()
             except:
-                raise Logger.error( "cannot open file %r for writing" %outputPath)
+                raise Exception(Logger.error( "cannot open file %r for writing" %outputPath))
             # check coordinates
             if coordinates is not None:
                 assert isinstance(coordinates, np.ndarray), "coordinates must be numpy array instance"
@@ -2130,7 +2130,7 @@ _atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma,_desc
                 bc=PeriodicBoundaries()
                 bc.set_vectors(boundaryConditions)
             except:
-                raise Logger.error( "boundary conditions argument can't be converted to pdbparser BoundaryConditions instance")
+                raise Exception(Logger.error( "boundary conditions argument can't be converted to pdbparser BoundaryConditions instance"))
             else:
                 self._boundaryConditions = bc
         recordsLength = len(self.records)
@@ -2225,7 +2225,7 @@ _atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma,_desc
                 os.system("%s -pdb %s %s" %(vmdAlias, commands, filename) )
         except:
             os.remove(filename)
-            raise Logger.error('vmd alias %r defined is not correct' %vmdAlias)
+            raise Exception(Logger.error('vmd alias %r defined is not correct' %vmdAlias))
         else:
             # remove tempfile
             os.remove(filename)
@@ -2264,7 +2264,7 @@ _atom_site_fract_z""".format(a=a,b=b,c=c,alpha=alpha,beta=beta,gamma=gamma,_desc
             os.system("%s %s" %(pymolAlias, filename) )
         except:
             os.remove(filename)
-            raise Logger.error('pymol alias %r defined is not correct' %vmdAlias)
+            raise Exception(Logger.error('pymol alias %r defined is not correct' %vmdAlias))
         else:
             # remove tempfile
             os.remove(filename)
@@ -2452,7 +2452,7 @@ class pdbTrajectory(object):
         try:
             index = int(index)
         except:
-            raise Logger.error("index must be integer convertible")
+            raise Exception(Logger.error("index must be integer convertible"))
         assert index>=0 and index<len(self), Logger.error("index must within trajectory length")
         self.__configurationIndex = index
 
@@ -2467,7 +2467,7 @@ class pdbTrajectory(object):
             try:
                 structure = pdbparser(structure)
             except:
-                raise Logger.error("pdbTrajectory structure must be pdbparser convertible file or None")
+                raise Exception(Logger.error("pdbTrajectory structure must be pdbparser convertible file or None"))
         self._reset()
         self._structure = structure
 
@@ -2493,7 +2493,7 @@ class pdbTrajectory(object):
         try:
             traj = pickle.load( open( path, "rb" ) )
         except:
-            raise Logger.error("cannot open %s"%path)
+            raise Exception(Logger.error("cannot open %s"%path))
         else:
             assert isinstance(traj, pdbTrajectory), Logger.error("object cannot be converted to pdbTrajectory")
         # set filePath
@@ -2529,7 +2529,7 @@ class pdbTrajectory(object):
         try:
             tempDir = tempfile.mkdtemp()
         except:
-            raise Logger.error("cannot create temporary directory")
+            raise Exception(Logger.error("cannot create temporary directory"))
         # create temporary trajectory file
         filename = os.path.join(tempDir, "trajectory.xyz")
         self.export_xyz_trajectory(outputPath=filename, indexes=indexes, atomsIndexes=atomsIndexes)
@@ -2543,7 +2543,7 @@ class pdbTrajectory(object):
             os.system( "%s %s" %(vmdAlias, filename) )
         except:
             shutil.rmtree(tempDir)
-            raise Logger.error('vmd alias %r defined is not correct' %vmdAlias)
+            raise Exception(Logger.error('vmd alias %r defined is not correct' %vmdAlias))
         # remove trajectory file
         shutil.rmtree(tempDir)
 
@@ -2570,7 +2570,7 @@ class pdbTrajectory(object):
             try:
                 indexes = [int(indexes[0]), int(indexes[1]), int(indexes[2])]
             except:
-                raise Logger.error("indexes must be a list of 3 integers [start, end, step]")
+                raise Exception(Logger.error("indexes must be a list of 3 integers [start, end, step]"))
             assert indexes[0]>=1, Logger.error("indexes start must be positive")
             assert indexes[1]>=1, Logger.error("indexes end must be positive")
             assert indexes[2]>=1, Logger.error("indexes step must be positive")
@@ -2579,28 +2579,28 @@ class pdbTrajectory(object):
         try:
             fd = open(pdb,'r')
         except:
-            raise Logger.error("cannot open pdb file")
+            raise Exception(Logger.error("cannot open pdb file"))
         else:
             fd.close()
         # check xst file
         try:
             fd = open(xst,'r')
         except:
-            raise Logger.error("cannot open xst file")
+            raise Exception(Logger.error("cannot open xst file"))
         else:
             fd.close()
         # check dcd file
         try:
             fd = open(dcd,'r')
         except:
-            raise Logger.error("cannot open dcd file")
+            raise Exception(Logger.error("cannot open dcd file"))
         else:
             fd.close()
         # create pdbTrajectory temporary folder
         try:
             tempDir = tempfile.mkdtemp()
         except:
-            raise Logger.error("cannot create temporary directory")
+            raise Exception(Logger.error("cannot create temporary directory"))
         # create vmd log file
         vmdLog = os.path.join(tempDir,"vmd.log")
         # read xst file and remove first line which is not savec in dcd file
@@ -2619,7 +2619,7 @@ class pdbTrajectory(object):
             fd = open(extractFiles_file, 'w')
         except:
             shutil.rmtree(tempDir)
-            raise Logger.error("cannot create temporary files")
+            raise Exception(Logger.error("cannot create temporary files"))
         else:
             fd.write("mol load pdb %s dcd %s \n"%(pdb,dcd))
             fd.write("set nf [molinfo top get numframes] \n")
@@ -2644,20 +2644,20 @@ class pdbTrajectory(object):
             os.system( "%s -dispdev text -e  %s > %s" %(vmdAlias, extractFiles_file, vmdLog) )
         except:
             shutil.rmtree(tempDir)
-            raise Logger.error('vmd alias %r defined is not correct' %vmdAlias)
+            raise Exception(Logger.error('vmd alias %r defined is not correct' %vmdAlias))
         else:
             os.remove(extractFiles_file)
         # get number of pdb created
         numberOfFrames = len([name for name in os.listdir(tempDir) if ".pdb" in name])
         if len(times)!=numberOfFrames:
             shutil.rmtree(tempDir)
-            raise Logger.error("xst number of frames is %s must be equal to exported dcd number of frames which is %s"%(len(times),numberOfFrames))
+            raise Exception(Logger.error("xst number of frames is %s must be equal to exported dcd number of frames which is %s"%(len(times),numberOfFrames)))
         # set structure
         try:
             self.set_structure(pdb)
         except:
             shutil.rmtree(tempDir)
-            raise Logger.error("cannot read pdb structure file")
+            raise Exception(Logger.error("cannot read pdb structure file"))
         # read files
         pdbFilesIndexes = range(indexes[0],indexes[1],indexes[2])
         for idx in range(numberOfFrames):
@@ -2668,7 +2668,7 @@ class pdbTrajectory(object):
                 os.remove(pdbPath)
             except Exception as e:
                 shutil.rmtree(tempDir)
-                raise Logger.error(e)
+                raise Exception(Logger.error(e))
         # remove temp directory
         shutil.rmtree(tempDir)
 
@@ -2687,7 +2687,7 @@ class pdbTrajectory(object):
             try:
                 trajectory = pickle.load( open( trajectory, "rb" ) )
             except:
-                raise Logger.error("cannot open %s"%trajectory)
+                raise Exception(Logger.error("cannot open %s"%trajectory))
             else:
                 assert isinstance(trajectory, pdbTrajectory), Logger.error("trajectory must be pdbTrajectory convertible")
         # check periodic boundary conditions
@@ -2711,7 +2711,7 @@ class pdbTrajectory(object):
             elif self._times[0]!=0:
                 timeCorrection += self._time[0]
             else:
-                raise Logger.error("time adjustement is not possible")
+                raise Exception(Logger.error("time adjustement is not possible"))
         self._coordinates.extend(trajectory._coordinates)
         for idx in range(len(trajectory)):
             self._boundaryConditions.set_vectors(trajectory._simulationBox.get_vectors(idx))
@@ -2728,7 +2728,7 @@ class pdbTrajectory(object):
         try:
             index = float(index)
         except:
-            raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+            raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
         assert index>=0, Logger.error("configuration index must be positive number")
         assert index%1==0, Logger.error("configuration index must be number and integer equivalent")
         assert index<=len(self), Logger.error("configuraion index must not exceed trajectory length %s"%len(self))
@@ -2753,7 +2753,7 @@ class pdbTrajectory(object):
             try:
                 index = float(index)
             except:
-                raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+                raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
             assert index>=0, Logger.error("configuration index must be positive number")
             assert index%1==0, Logger.error("configuration index must be number and integer equivalent")
             assert index<len(self), Logger.error("atom index must smaller than number of atoms in structure %s"%len(self._structure))
@@ -2786,7 +2786,7 @@ class pdbTrajectory(object):
         try:
             index = float(index)
         except:
-            raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+            raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
         assert index>=0, Logger.error("configuration index must be positive number")
         assert index%1==0, Logger.error("configuration index must be number and integer equivalent")
         assert index<=len(self), Logger.error("configuraion index must not exceed trajectory length %s"%len(self))
@@ -2795,7 +2795,7 @@ class pdbTrajectory(object):
         try:
             time = float(time)
         except:
-            raise Logger.error("configuration time must be number convertible, %s given instead"%time)
+            raise Exception(Logger.error("configuration time must be number convertible, %s given instead"%time))
         assert time>=0, Logger.error("configuration time must be positive number")
         if index == 0:
             if len(self._time) > 0:
@@ -2810,7 +2810,7 @@ class pdbTrajectory(object):
             try:
                 pdb = pdbparser(pdb)
             except:
-                raise Logger.error("pdb must be pdbparser convertible file")
+                raise Exception(Logger.error("pdb must be pdbparser convertible file"))
         assert len(pdb)==len(self._structure), Logger.error("number of atoms in pdb doesn't match witht the number of atoms in trajectory structure")
         # check vectors
         assert (vectors is None) or (isinstance(vectors, (Number, np.ndarray))), Logger.error("vectors can be either None, number, numpy.ndarray")
@@ -2822,7 +2822,7 @@ class pdbTrajectory(object):
                 try:
                     sb.set_vectors(vectors)
                 except:
-                    raise Logger.error("incompatible vectors format")
+                    raise Exception(Logger.error("incompatible vectors format"))
         ############ Done with checking ###########
         # add simulation box vectors
         if self._boundaryConditions is None:
@@ -2835,7 +2835,7 @@ class pdbTrajectory(object):
             try:
                 self._boundaryConditions.set_vectors(vectors, index)
             except:
-                raise Logger.error("incompatible vectors format")
+                raise Exception(Logger.error("incompatible vectors format"))
         # add time
         self._time.insert(index, time)
         # add configuration coordinates
@@ -2865,7 +2865,7 @@ class pdbTrajectory(object):
         try:
             index = float(index)
         except:
-            raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+            raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
         assert index>=0, Logger.error("configuration index must be positive number")
         assert index%1==0, Logger.error("configuration index must be number and integer equivalent")
         assert index<len(self), Logger.error("configuraion index must not smaller then trajectory length %s"%len(self))
@@ -2885,11 +2885,11 @@ class pdbTrajectory(object):
             #. configuration (numpy.ndarray): atom positions across all trajectory. array shape is (numberOfAtoms, 3)
         """
         if not isinstance(self._boundaryConditions, PeriodicBoundaries):
-            raise Logger.error("contiguous configuration is not possible with infinite boundaries trajectory")
+            raise Exception(Logger.error("contiguous configuration is not possible with infinite boundaries trajectory"))
         try:
             configurationIndex = float(configurationIndex)
         except:
-            raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+            raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
         assert configurationIndex>=0, Logger.error("configuration index must be positive number")
         assert configurationIndex%1==0, Logger.error("configuration index must be number and integer equivalent")
         assert configurationIndex<len(self), Logger.error("configuraion index must not smaller then trajectory length %s"%len(self))
@@ -2899,9 +2899,9 @@ class pdbTrajectory(object):
             group = list(group)
             for g in group:
                 if not g in self._structure.records[0]:
-                    raise Logger.error("group item %s argument must be a valid pdbparser record key"%g)
+                    raise Exception(Logger.error("group item %s argument must be a valid pdbparser record key"%g))
         elif not group in self._structure.records[0]:
-            raise Logger.error("argument group %s must be a valid pdbparser record key"%group)
+            raise Exception(Logger.error("argument group %s must be a valid pdbparser record key"%group))
         else:
             group = [group]
         # get box coordinates
@@ -2966,7 +2966,7 @@ class pdbTrajectory(object):
         try:
             index = float(index)
         except:
-            raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+            raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
         assert index>=0, Logger.error("configuration index must be positive number")
         assert index%1==0, Logger.error("configuration index must be number and integer equivalent")
         assert index<len(self), Logger.error("configuraion index must not smaller then trajectory length %s"%len(self))
@@ -2987,7 +2987,7 @@ class pdbTrajectory(object):
         try:
             index = float(index)
         except:
-            raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+            raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
         assert index>=0, Logger.error("configuration index must be positive number")
         assert index%1==0, Logger.error("configuration index must be number and integer equivalent")
         assert index<len(self), Logger.error("configuraion index must not smaller then trajectory length %s"%len(self))
@@ -2998,7 +2998,7 @@ class pdbTrajectory(object):
             try:
                 idx = float(idx)
             except:
-                raise Logger.error("atom idx must be number convertible, %s given instead"%index)
+                raise Exception(Logger.error("atom idx must be number convertible, %s given instead"%index))
             assert idx>=0, Logger.error("atom idx must be positive number")
             assert idx%1==0, Logger.error("atom idx must be number and integer equivalent")
             assert idx<len(self._structure), Logger.error("atom idx must smaller than number of atoms in structure %s"%len(self._structure))
@@ -3029,7 +3029,7 @@ class pdbTrajectory(object):
             try:
                 index = float(index)
             except:
-                raise Logger.error("atom index must be number convertible, %s given instead"%index)
+                raise Exception(Logger.error("atom index must be number convertible, %s given instead"%index))
             assert index>=0, Logger.error("atom index must be positive number")
             assert index%1==0, Logger.error("atom index must be number and integer equivalent")
             assert index<len(self._structure), Logger.error("atom index must smaller than number of atoms in structure %s"%len(self._structure))
@@ -3059,7 +3059,7 @@ class pdbTrajectory(object):
         try:
             index = float(index)
         except:
-            raise Logger.error("atom index must be number convertible, %s given instead"%index)
+            raise Exception(Logger.error("atom index must be number convertible, %s given instead"%index))
         assert index>=0, Logger.error("atom index must be positive number")
         assert index%1==0, Logger.error("atom index must be number and integer equivalent")
         assert index<len(self._structure), Logger.error("configuraion index must smaller than number of atoms in structure %s"%len(self._structure))
@@ -3198,7 +3198,7 @@ class pdbTrajectory(object):
                 try:
                     index = float(index)
                 except:
-                    raise Logger.error("configuration index must be number convertible, %s given instead"%index)
+                    raise Exception(Logger.error("configuration index must be number convertible, %s given instead"%index))
                 assert index>=0, Logger.error("configuration index must be positive number")
                 assert index%1==0, Logger.error("configuration index must be number and integer equivalent")
                 assert index<len(self), Logger.error("configuraion index must smaller than number of configurations in trajectory %s"%len(self))

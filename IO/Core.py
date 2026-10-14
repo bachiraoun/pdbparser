@@ -74,7 +74,7 @@ class FortranBinaryFile(object):
         try:
             data = self.next()
         except StopIteration:
-            raise Logger.error("Unexpected end of file")
+            raise Exception(Logger.error("Unexpected end of file"))
         if repeat:
             unit = struct.calcsize(self.__byteOrder + format)
             assert len(data) % unit == 0, Logger.error("wrong data length")
@@ -82,7 +82,7 @@ class FortranBinaryFile(object):
         try:
             return struct.unpack(self.__byteOrder + format, data)
         except:
-            raise Logger.error("not able to unpack data")
+            raise Exception(Logger.error("not able to unpack data"))
 
 
 class DCDFile(object):
@@ -108,13 +108,13 @@ class DCDFile(object):
                 self.__byteOrder = byte_order
                 break
         if self.__byteOrder is None:
-            raise Logger.error("%s is not a DCD file" % filename)
+            raise Exception(Logger.error("%s is not a DCD file" % filename))
         # Open the file
         self.__binary = FortranBinaryFile(filename, self.__byteOrder)
         # Read the header information
         header_data = self.__binary.next()
         if header_data[:4] != 'CORD':
-            raise Logger.error("%s is not a DCD file" % filename)
+            raise Exception(Logger.error("%s is not a DCD file" % filename))
         self.header = struct.unpack(self.__byteOrder + '9id9i', header_data[4:])
         self.numberOfConfigurations = self.header[0]
         self.istart = self.header[1]
@@ -145,7 +145,7 @@ class DCDFile(object):
         self.natoms = self.__binary.get_record('i')[0]
         # Stop if there are fixed atoms.
         if self.namnf > 0:
-            raise Logger.error("NAMD converter can not handle fixed atoms yet")
+            raise Exception(Logger.error("NAMD converter can not handle fixed atoms yet"))
 
     @property
     def fileSize(self):

@@ -50,7 +50,7 @@ class DCDConverter(Converter):
         try:
             fd = open(pdb,'r')
         except:
-            raise Logger.error("cannot open pdb file")
+            raise Exception(Logger.error("cannot open pdb file"))
         else:
             fd.close()
             self.pdb = pdb
@@ -58,7 +58,7 @@ class DCDConverter(Converter):
         try:
             fd = open(dcd,'r')
         except:
-            raise Logger.error("cannot open dcd file")
+            raise Exception(Logger.error("cannot open dcd file"))
         else:
             fd.close()
             self.dcd=dcd
@@ -150,6 +150,6 @@ class DCDConverter(Converter):
         if self.format in ('charmm','namd'):
             self.trajectory = self.__convert_charmm__()
         else:
-            raise Logger.error("unsupported dcd format")
+            raise Exception(Logger.error("unsupported dcd format"))
         self.trajectory._filePath = self.dcd
         return self.trajectory
